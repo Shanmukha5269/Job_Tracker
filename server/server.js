@@ -22,7 +22,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from client folder
-app.use(express.static(path.join(__dirname, '../client')));
+app.use(express.static(path.join(__dirname, '../client'), {
+  index: false 
+}));
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -32,9 +34,9 @@ app.use('/api/jobs', jobRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/contacts', contactRoutes);
 
-// Root route - serve index.html
+// Root route - serve home page
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client', 'index.html'));
+  res.sendFile(path.join(__dirname, '../client', 'home.html'));
 });
 
 // Error handling middleware

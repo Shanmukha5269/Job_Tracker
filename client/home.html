@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Tracker - Organize Your Job Search Journey</title>
+  <link rel="stylesheet" href="home-styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar-home">
+    <div class="nav-container-home">
+      <div class="logo">
+        <i class="fas fa-briefcase"></i>
+        <span>Job Tracker</span>
+      </div>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#about">About</a>
+        <a href="index.html" class="btn-nav-secondary">Login</a>
+        <a href="index.html" class="btn-nav-primary">Get Started</a>
+      </div>
+      <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-text">
+        <h1>Track Your Job Applications <span class="highlight">Like a Pro</span></h1>
+        <p class="hero-subtitle">Streamline your job search with a powerful tracker that helps you organize applications, manage contacts, and land your dream job faster.</p>
+        <div class="hero-buttons">
+          <a href="index.html" class="btn-hero-primary">
+            Start Tracking Free
+            <i class="fas fa-arrow-right"></i>
+          </a>
+          <a href="#how-it-works" class="btn-hero-secondary">
+            <i class="fas fa-play-circle"></i>
+            See How It Works
+          </a>
+        </div>
+        <p class="hero-note">✓ No credit card required • ✓ Free forever</p>
+      </div>
+      <div class="hero-image">
+        <div class="dashboard-preview">
+          <div class="preview-card card-1">
+            <div class="card-header">
+              <div class="card-icon blue"><i class="fas fa-building"></i></div>
+              <div>
+                <h4>Senior Developer</h4>
+                <p>Google Inc.</p>
+              </div>
+            </div>
+            <span class="status-tag applied">Applied</span>
+          </div>
+          <div class="preview-card card-2">
+            <div class="card-header">
+              <div class="card-icon green"><i class="fas fa-code"></i></div>
+              <div>
+                <h4>Frontend Engineer</h4>
+                <p>Microsoft</p>
+              </div>
+            </div>
+            <span class="status-tag interview">Interview</span>
+          </div>
+          <div class="preview-card card-3">
+            <div class="card-header">
+              <div class="card-icon purple"><i class="fas fa-laptop-code"></i></div>
+              <div>
+                <h4>Full Stack Dev</h4>
+                <p>Amazon</p>
+              </div>
+            </div>
+            <span class="status-tag in-review">In Review</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="stats">
+    <div class="stats-container">
+      <div class="stat-item">
+        <h3 class="stat-number" data-target="10000">0</h3>
+        <p>Active Users</p>
+      </div>
+      <div class="stat-item">
+        <h3 class="stat-number" data-target="50000">0</h3>
+        <p>Jobs Tracked</p>
+      </div>
+      <div class="stat-item">
+        <h3 class="stat-number" data-target="5000">0</h3>
+        <p>Interviews Scheduled</p>
+      </div>
+      <div class="stat-item">
+        <h3 class="stat-number" data-target="3000">0</h3>
+        <p>Job Offers Received</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features" class="features">
+    <div class="section-header-center">
+      <h2>Everything You Need to <span class="highlight">Land Your Dream Job</span></h2>
+      <p>Powerful features designed to make your job search organized, efficient, and successful</p>
+    </div>
+    
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon purple-gradient">
+          <i class="fas fa-clipboard-list"></i>
+        </div>
+        <h3>Track Applications</h3>
+        <p>Monitor all your job applications in one centralized dashboard. Never lose track of where you applied.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon blue-gradient">
+          <i class="fas fa-building"></i>
+        </div>
+        <h3>Manage Companies</h3>
+        <p>Store detailed information about companies you're interested in, including culture, contacts, and notes.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon green-gradient">
+          <i class="fas fa-briefcase"></i>
+        </div>
+        <h3>Save Job Listings</h3>
+        <p>Keep all job postings organized with descriptions, requirements, and application deadlines.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon orange-gradient">
+          <i class="fas fa-users"></i>
+        </div>
+        <h3>Contact Management</h3>
+        <p>Maintain a database of recruiters, hiring managers, and professional contacts for each company.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon pink-gradient">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <h3>Progress Tracking</h3>
+        <p>Visualize your application journey from submitted to offer accepted with status updates.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon teal-gradient">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <h3>Interview Scheduler</h3>
+        <p>Keep track of interview dates, times, and important notes to never miss an opportunity.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works Section -->
+  <section id="how-it-works" class="how-it-works">
+    <div class="section-header-center">
+      <h2>How It Works</h2>
+      <p>Get started in three simple steps</p>
+    </div>
+
+    <div class="steps-container">
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <h3>Create Your Account</h3>
+          <p>Sign up for free in seconds. No credit card required. Start organizing your job search immediately.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <h3>Add Your Applications</h3>
+          <p>Import or manually add job applications, companies, and contacts. Organize everything in one place.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <h3>Track & Succeed</h3>
+          <p>Monitor your progress, update statuses, and stay organized throughout your entire job search journey.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Benefits Section -->
+  <section class="benefits">
+    <div class="benefits-container">
+      <div class="benefits-content">
+        <h2>Why Job Seekers Love Job Tracker</h2>
+        <ul class="benefits-list">
+          <li>
+            <i class="fas fa-check-circle"></i>
+            <div>
+              <h4>Stay Organized</h4>
+              <p>No more spreadsheets or sticky notes. Keep everything in one intuitive dashboard.</p>
+            </div>
+          </li>
+          <li>
+            <i class="fas fa-check-circle"></i>
+            <div>
+              <h4>Save Time</h4>
+              <p>Quickly access all your job search information without switching between multiple tools.</p>
+            </div>
+          </li>
+          <li>
+            <i class="fas fa-check-circle"></i>
+            <div>
+              <h4>Never Miss Deadlines</h4>
+              <p>Track application deadlines and interview dates to stay on top of your job search.</p>
+            </div>
+          </li>
+          <li>
+            <i class="fas fa-check-circle"></i>
+            <div>
+              <h4>Professional Network</h4>
+              <p>Build and maintain relationships with recruiters and hiring managers.</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div class="benefits-visual">
+        <div class="floating-card card-floating-1">
+          <i class="fas fa-check"></i>
+          <span>Application Submitted</span>
+        </div>
+        <div class="floating-card card-floating-2">
+          <i class="fas fa-calendar"></i>
+          <span>Interview Tomorrow</span>
+        </div>
+        <div class="floating-card card-floating-3">
+          <i class="fas fa-star"></i>
+          <span>Offer Received!</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta">
+    <div class="cta-content">
+      <h2>Ready to Organize Your Job Search?</h2>
+      <p>Join thousands of job seekers who are tracking their applications smarter.</p>
+      <a href="index.html" class="btn-cta">
+        Get Started Now - It's Free
+        <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <div class="logo">
+          <i class="fas fa-briefcase"></i>
+          <span>Job Tracker</span>
+        </div>
+        <p>Streamline your job search and land your dream job faster with our comprehensive tracking system.</p>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how-it-works">How It Works</a></li>
+          <li><a href="index.html">Login</a></li>
+          <li><a href="index.html">Sign Up</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#about">About Us</a></li>
+          <li><a href="#contact">Contact</a></li>
+          <li><a href="#privacy">Privacy Policy</a></li>
+          <li><a href="#terms">Terms of Service</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h4>Connect</h4>
+        <div class="social-links">
+          <a href="#"><i class="fab fa-twitter"></i></a>
+          <a href="#"><i class="fab fa-linkedin"></i></a>
+          <a href="#"><i class="fab fa-facebook"></i></a>
+          <a href="#"><i class="fab fa-instagram"></i></a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <p>&copy; 2025 Job Tracker. All rights reserved. | UVCE DBMS Project</p>
+    </div>
+  </footer>
+
+  <script src="home.js"></script>
+</body>
+</html>
