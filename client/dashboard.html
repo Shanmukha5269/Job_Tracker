@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Tracker - Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <h2>Job Tracker</h2>
+      <div class="nav-menu">
+        <a href="#" onclick="showSection('applications')">Applications</a>
+        <a href="#" onclick="showSection('jobs')">Jobs</a>
+        <a href="#" onclick="showSection('companies')">Companies</a>
+        <a href="#" onclick="showSection('contacts')">Contacts</a>
+        <a href="#" onclick="showSection('profile')">Profile</a>
+        <button class="btn-secondary" onclick="logout()">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="dashboard-container">
+    <!-- Applications Section -->
+    <div id="applicationsSection" class="section active">
+      <div class="section-header">
+        <h2>My Applications</h2>
+        <button class="btn-primary" onclick="showAddApplicationForm()">Add Application</button>
+      </div>
+      
+      <div id="addApplicationForm" class="form-container" style="display: none;">
+        <h3>Add New Application</h3>
+        <form id="applicationForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Job</label>
+              <select id="appJobId" required></select>
+            </div>
+            <div class="form-group">
+              <label>Application Date</label>
+              <input type="date" id="appDate" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Status</label>
+              <select id="appStatus">
+                <option value="Applied">Applied</option>
+                <option value="In Review">In Review</option>
+                <option value="Interview Scheduled">Interview Scheduled</option>
+                <option value="Rejected">Rejected</option>
+                <option value="Accepted">Accepted</option>
+                <option value="Withdrawn">Withdrawn</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Resume Link</label>
+              <input type="text" id="appResume">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Cover Letter</label>
+            <textarea id="appCoverLetter" rows="3"></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Submit</button>
+            <button type="button" class="btn-secondary" onclick="hideAddApplicationForm()">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="applicationsList" class="data-list"></div>
+    </div>
+
+    <!-- Jobs Section -->
+    <div id="jobsSection" class="section">
+      <div class="section-header">
+        <h2>Available Jobs</h2>
+        <button class="btn-primary" onclick="showAddJobForm()">Add Job</button>
+      </div>
+      
+      <div id="addJobForm" class="form-container" style="display: none;">
+        <h3>Add New Job</h3>
+        <form id="jobForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Company</label>
+              <select id="jobCompanyId" required></select>
+            </div>
+            <div class="form-group">
+              <label>Job Title</label>
+              <input type="text" id="jobTitle" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Job Description</label>
+            <textarea id="jobDescription" rows="3"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Location</label>
+              <input type="text" id="jobLocation">
+            </div>
+            <div class="form-group">
+              <label>Employment Type</label>
+              <select id="jobEmploymentType" required>
+                <option value="Full-time">Full-time</option>
+                <option value="Part-time">Part-time</option>
+                <option value="Contract">Contract</option>
+                <option value="Internship">Internship</option>
+                <option value="Remote">Remote</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Salary Range</label>
+              <input type="text" id="jobSalary">
+            </div>
+            <div class="form-group">
+              <label>Posted Date</label>
+              <input type="date" id="jobPostedDate">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Application Deadline</label>
+              <input type="date" id="jobDeadline">
+            </div>
+            <div class="form-group">
+              <label>Job URL</label>
+              <input type="url" id="jobUrl">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Submit</button>
+            <button type="button" class="btn-secondary" onclick="hideAddJobForm()">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="jobsList" class="data-list"></div>
+    </div>
+
+    <!-- Companies Section -->
+    <div id="companiesSection" class="section">
+      <div class="section-header">
+        <h2>Companies</h2>
+        <button class="btn-primary" onclick="showAddCompanyForm()">Add Company</button>
+      </div>
+      
+      <div id="addCompanyForm" class="form-container" style="display: none;">
+        <h3>Add New Company</h3>
+        <form id="companyForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Company Name</label>
+              <input type="text" id="companyName" required>
+            </div>
+            <div class="form-group">
+              <label>Industry</label>
+              <input type="text" id="companyIndustry">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Location</label>
+              <input type="text" id="companyLocation">
+            </div>
+            <div class="form-group">
+              <label>Website</label>
+              <input type="url" id="companyWebsite">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="companyDescription" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Number of Employees</label>
+            <input type="number" id="companyEmployees">
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Submit</button>
+            <button type="button" class="btn-secondary" onclick="hideAddCompanyForm()">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="companiesList" class="data-list"></div>
+    </div>
+
+    <!-- Contacts Section -->
+    <div id="contactsSection" class="section">
+      <div class="section-header">
+        <h2>Contacts</h2>
+        <button class="btn-primary" onclick="showAddContactForm()">Add Contact</button>
+      </div>
+      
+      <div id="addContactForm" class="form-container" style="display: none;">
+        <h3>Add New Contact</h3>
+        <form id="contactForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Company</label>
+              <select id="contactCompanyId" required></select>
+            </div>
+            <div class="form-group">
+              <label>Contact Name</label>
+              <input type="text" id="contactName" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Job Title</label>
+              <input type="text" id="contactJobTitle">
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="contactEmail">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="tel" id="contactPhone">
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Submit</button>
+            <button type="button" class="btn-secondary" onclick="hideAddContactForm()">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="contactsList" class="data-list"></div>
+    </div>
+
+    <!-- Profile Section -->
+    <div id="profileSection" class="section">
+      <div class="section-header">
+        <h2>My Profile</h2>
+      </div>
+      
+      <div class="form-container">
+        <form id="profileForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="profileFullName" required>
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="profileEmail" disabled>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" id="profilePhone">
+            </div>
+            <div class="form-group">
+              <label>Location</label>
+              <input type="text" id="profileLocation">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Gender</label>
+            <select id="profileSex">
+              <option value="">Select</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <button type="submit" class="btn-primary">Update Profile</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
