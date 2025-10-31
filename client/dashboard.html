@@ -4,277 +4,478 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Job Tracker - Dashboard</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="dashboard-styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-  <nav class="navbar">
-    <div class="nav-container">
-      <h2>Job Tracker</h2>
-      <div class="nav-menu">
-        <a href="#" onclick="showSection('applications')">Applications</a>
-        <a href="#" onclick="showSection('jobs')">Jobs</a>
-        <a href="#" onclick="showSection('companies')">Companies</a>
-        <a href="#" onclick="showSection('contacts')">Contacts</a>
-        <a href="#" onclick="showSection('profile')">Profile</a>
-        <button class="btn-secondary" onclick="logout()">Logout</button>
+  <!-- Top Navigation Bar -->
+  <nav class="top-navbar">
+    <div class="nav-left">
+      <div class="logo">
+        <i class="fas fa-briefcase"></i>
+        <span>Job Tracker</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="user-menu">
+        <div class="user-avatar" onclick="toggleUserDropdown()">
+          <span id="userInitial">U</span>
+        </div>
+        <div class="user-dropdown" id="userDropdown">
+          <div class="dropdown-header">
+            <p id="userName">User Name</p>
+            <p id="userEmail">user@example.com</p>
+          </div>
+          <button onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </button>
+        </div>
       </div>
     </div>
   </nav>
 
-  <div class="dashboard-container">
-    <!-- Applications Section -->
-    <div id="applicationsSection" class="section active">
-      <div class="section-header">
-        <h2>My Applications</h2>
-        <button class="btn-primary" onclick="showAddApplicationForm()">Add Application</button>
+  <div class="dashboard-wrapper">
+    <!-- Fixed Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-content">
+        <div class="user-profile-sidebar">
+          <div class="profile-avatar">
+            <span id="sidebarUserInitial">U</span>
+            <button class="edit-avatar" onclick="showSection('profile')">
+              <i class="fas fa-pencil-alt"></i>
+            </button>
+          </div>
+          <h3 id="sidebarUserName">User Name</h3>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a href="#" class="nav-item active" onclick="showSection('profile')" data-section="profile">
+            <i class="fas fa-user"></i>
+            <span>Profile</span>
+          </a>
+          <a href="#" class="nav-item" onclick="showSection('applications')" data-section="applications">
+            <i class="fas fa-clipboard-list"></i>
+            <span>My Applications</span>
+          </a>
+          <a href="#" class="nav-item" onclick="showSection('jobs')" data-section="jobs">
+            <i class="fas fa-briefcase"></i>
+            <span>Jobs</span>
+          </a>
+          <a href="#" class="nav-item" onclick="showSection('companies')" data-section="companies">
+            <i class="fas fa-building"></i>
+            <span>Companies</span>
+          </a>
+          <a href="#" class="nav-item" onclick="showSection('contacts')" data-section="contacts">
+            <i class="fas fa-address-book"></i>
+            <span>Contacts</span>
+          </a>
+          <a href="#" class="nav-item" onclick="showSection('statistics')" data-section="statistics">
+            <i class="fas fa-chart-bar"></i>
+            <span>Statistics</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <button class="btn-logout" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+          </button>
+        </div>
       </div>
-      
-      <div id="addApplicationForm" class="form-container" style="display: none;">
-        <h3>Add New Application</h3>
-        <form id="applicationForm">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Job</label>
-              <select id="appJobId" required></select>
-            </div>
-            <div class="form-group">
-              <label>Application Date</label>
-              <input type="date" id="appDate" required>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Profile Section -->
+      <section id="profileSection" class="content-section active">
+        <div class="section-header">
+          <h1>My Profile</h1>
+        </div>
+        
+        <div class="profile-cards">
+          <div class="profile-card">
+            <h3>Personal Information</h3>
+            <form id="profileForm" class="profile-form">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Full Name</label>
+                  <input type="text" id="profileFullName" required>
+                </div>
+                <div class="form-group">
+                  <label>Email</label>
+                  <input type="email" id="profileEmail" disabled>
+                </div>
+                <div class="form-group">
+                  <label>Phone</label>
+                  <input type="tel" id="profilePhone">
+                </div>
+                <div class="form-group">
+                  <label>Location</label>
+                  <input type="text" id="profileLocation">
+                </div>
+                <div class="form-group">
+                  <label>Gender</label>
+                  <select id="profileSex">
+                    <option value="">Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <button type="submit" class="btn-primary">
+                <i class="fas fa-save"></i> Update Profile
+              </button>
+            </form>
+          </div>
+
+          <div class="profile-stats-card">
+            <h3>Your Statistics</h3>
+            <div class="stats-grid">
+              <div class="stat-box">
+                <i class="fas fa-clipboard-list"></i>
+                <div>
+                  <h4 id="totalApplications">0</h4>
+                  <p>Total Applications</p>
+                </div>
+              </div>
+              <div class="stat-box">
+                <i class="fas fa-hourglass-half"></i>
+                <div>
+                  <h4 id="pendingApplications">0</h4>
+                  <p>In Review</p>
+                </div>
+              </div>
+              <div class="stat-box">
+                <i class="fas fa-calendar-check"></i>
+                <div>
+                  <h4 id="interviewScheduled">0</h4>
+                  <p>Interviews</p>
+                </div>
+              </div>
+              <div class="stat-box">
+                <i class="fas fa-check-circle"></i>
+                <div>
+                  <h4 id="acceptedOffers">0</h4>
+                  <p>Offers</p>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Status</label>
-              <select id="appStatus">
-                <option value="Applied">Applied</option>
-                <option value="In Review">In Review</option>
-                <option value="Interview Scheduled">Interview Scheduled</option>
-                <option value="Rejected">Rejected</option>
-                <option value="Accepted">Accepted</option>
-                <option value="Withdrawn">Withdrawn</option>
-              </select>
+        </div>
+      </section>
+
+      <!-- Applications Section -->
+      <section id="applicationsSection" class="content-section">
+        <div class="section-header">
+          <h1>My Applications</h1>
+          <button class="btn-primary" onclick="showAddApplicationModal()">
+            <i class="fas fa-plus"></i> Add Application
+          </button>
+        </div>
+        
+        <div class="filters-bar">
+          <select id="statusFilter" onchange="filterApplications()">
+            <option value="">All Status</option>
+            <option value="Applied">Applied</option>
+            <option value="In Review">In Review</option>
+            <option value="Interview Scheduled">Interview Scheduled</option>
+            <option value="Rejected">Rejected</option>
+            <option value="Accepted">Accepted</option>
+            <option value="Withdrawn">Withdrawn</option>
+          </select>
+          <input type="text" id="searchApplications" placeholder="Search applications..." onkeyup="searchApplications()">
+        </div>
+
+        <div id="applicationsList" class="cards-grid"></div>
+      </section>
+
+      <!-- Jobs Section -->
+      <section id="jobsSection" class="content-section">
+        <div class="section-header">
+          <h1>Available Jobs</h1>
+          <button class="btn-primary" onclick="showAddJobModal()">
+            <i class="fas fa-plus"></i> Add Job
+          </button>
+        </div>
+        
+        <div class="filters-bar">
+          <select id="employmentTypeFilter" onchange="filterJobs()">
+            <option value="">All Types</option>
+            <option value="Full-time">Full-time</option>
+            <option value="Part-time">Part-time</option>
+            <option value="Contract">Contract</option>
+            <option value="Internship">Internship</option>
+            <option value="Remote">Remote</option>
+          </select>
+          <input type="text" id="searchJobs" placeholder="Search jobs..." onkeyup="searchJobs()">
+        </div>
+
+        <div id="jobsList" class="cards-grid"></div>
+      </section>
+
+      <!-- Companies Section -->
+      <section id="companiesSection" class="content-section">
+        <div class="section-header">
+          <h1>Companies</h1>
+          <button class="btn-primary" onclick="showAddCompanyModal()">
+            <i class="fas fa-plus"></i> Add Company
+          </button>
+        </div>
+        
+        <div class="filters-bar">
+          <input type="text" id="searchCompanies" placeholder="Search companies..." onkeyup="searchCompanies()">
+        </div>
+
+        <div id="companiesList" class="cards-grid"></div>
+      </section>
+
+      <!-- Contacts Section -->
+      <section id="contactsSection" class="content-section">
+        <div class="section-header">
+          <h1>Professional Contacts</h1>
+          <button class="btn-primary" onclick="showAddContactModal()">
+            <i class="fas fa-plus"></i> Add Contact
+          </button>
+        </div>
+        
+        <div class="filters-bar">
+          <input type="text" id="searchContacts" placeholder="Search contacts..." onkeyup="searchContacts()">
+        </div>
+
+        <div id="contactsList" class="cards-grid"></div>
+      </section>
+
+      <!-- Statistics Section -->
+      <section id="statisticsSection" class="content-section">
+        <div class="section-header">
+          <h1>Statistics & Insights</h1>
+        </div>
+        
+        <div class="stats-overview">
+          <div class="stat-card blue">
+            <i class="fas fa-paper-plane"></i>
+            <div>
+              <h2 id="statsTotal">0</h2>
+              <p>Total Applications</p>
             </div>
-            <div class="form-group">
-              <label>Resume Link</label>
-              <input type="text" id="appResume">
+          </div>
+          <div class="stat-card green">
+            <i class="fas fa-calendar-alt"></i>
+            <div>
+              <h2 id="statsThisMonth">0</h2>
+              <p>This Month</p>
             </div>
+          </div>
+          <div class="stat-card orange">
+            <i class="fas fa-percentage"></i>
+            <div>
+              <h2 id="statsSuccessRate">0%</h2>
+              <p>Success Rate</p>
+            </div>
+          </div>
+          <div class="stat-card purple">
+            <i class="fas fa-clock"></i>
+            <div>
+              <h2 id="statsAvgTime">-- days</h2>
+              <p>Avg Response Time</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="charts-container">
+          <div class="chart-card">
+            <h3>Applications by Status</h3>
+            <canvas id="statusChart"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3>Application Timeline</h3>
+            <canvas id="timelineChart"></canvas>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modals -->
+  <div id="applicationModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Add New Application</h2>
+        <button class="close-modal" onclick="closeModal('applicationModal')">&times;</button>
+      </div>
+      <form id="applicationForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Job *</label>
+            <select id="appJobId" required></select>
           </div>
           <div class="form-group">
-            <label>Cover Letter</label>
-            <textarea id="appCoverLetter" rows="3"></textarea>
+            <label>Application Date *</label>
+            <input type="date" id="appDate" required>
           </div>
-          <div class="form-actions">
-            <button type="submit" class="btn-primary">Submit</button>
-            <button type="button" class="btn-secondary" onclick="hideAddApplicationForm()">Cancel</button>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="appStatus">
+              <option value="Applied">Applied</option>
+              <option value="In Review">In Review</option>
+              <option value="Interview Scheduled">Interview Scheduled</option>
+              <option value="Rejected">Rejected</option>
+              <option value="Accepted">Accepted</option>
+              <option value="Withdrawn">Withdrawn</option>
+            </select>
           </div>
-        </form>
-      </div>
-
-      <div id="applicationsList" class="data-list"></div>
+          <div class="form-group">
+            <label>Resume Link</label>
+            <input type="text" id="appResume">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Cover Letter</label>
+          <textarea id="appCoverLetter" rows="4"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeModal('applicationModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Submit</button>
+        </div>
+      </form>
     </div>
+  </div>
 
-    <!-- Jobs Section -->
-    <div id="jobsSection" class="section">
-      <div class="section-header">
-        <h2>Available Jobs</h2>
-        <button class="btn-primary" onclick="showAddJobForm()">Add Job</button>
+  <div id="jobModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Add New Job</h2>
+        <button class="close-modal" onclick="closeModal('jobModal')">&times;</button>
       </div>
-      
-      <div id="addJobForm" class="form-container" style="display: none;">
-        <h3>Add New Job</h3>
-        <form id="jobForm">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Company</label>
-              <select id="jobCompanyId" required></select>
-            </div>
-            <div class="form-group">
-              <label>Job Title</label>
-              <input type="text" id="jobTitle" required>
-            </div>
+      <form id="jobForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Company *</label>
+            <select id="jobCompanyId" required></select>
           </div>
           <div class="form-group">
-            <label>Job Description</label>
-            <textarea id="jobDescription" rows="3"></textarea>
+            <label>Job Title *</label>
+            <input type="text" id="jobTitle" required>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Location</label>
-              <input type="text" id="jobLocation">
-            </div>
-            <div class="form-group">
-              <label>Employment Type</label>
-              <select id="jobEmploymentType" required>
-                <option value="Full-time">Full-time</option>
-                <option value="Part-time">Part-time</option>
-                <option value="Contract">Contract</option>
-                <option value="Internship">Internship</option>
-                <option value="Remote">Remote</option>
-              </select>
-            </div>
+          <div class="form-group">
+            <label>Location</label>
+            <input type="text" id="jobLocation">
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Salary Range</label>
-              <input type="text" id="jobSalary">
-            </div>
-            <div class="form-group">
-              <label>Posted Date</label>
-              <input type="date" id="jobPostedDate">
-            </div>
+          <div class="form-group">
+            <label>Employment Type *</label>
+            <select id="jobEmploymentType" required>
+              <option value="Full-time">Full-time</option>
+              <option value="Part-time">Part-time</option>
+              <option value="Contract">Contract</option>
+              <option value="Internship">Internship</option>
+              <option value="Remote">Remote</option>
+            </select>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Application Deadline</label>
-              <input type="date" id="jobDeadline">
-            </div>
-            <div class="form-group">
-              <label>Job URL</label>
-              <input type="url" id="jobUrl">
-            </div>
+          <div class="form-group">
+            <label>Salary Range</label>
+            <input type="text" id="jobSalary" placeholder="e.g., $80k - $100k">
           </div>
-          <div class="form-actions">
-            <button type="submit" class="btn-primary">Submit</button>
-            <button type="button" class="btn-secondary" onclick="hideAddJobForm()">Cancel</button>
+          <div class="form-group">
+            <label>Posted Date</label>
+            <input type="date" id="jobPostedDate">
           </div>
-        </form>
-      </div>
-
-      <div id="jobsList" class="data-list"></div>
+          <div class="form-group">
+            <label>Application Deadline</label>
+            <input type="date" id="jobDeadline">
+          </div>
+          <div class="form-group">
+            <label>Job URL</label>
+            <input type="url" id="jobUrl">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Job Description</label>
+          <textarea id="jobDescription" rows="4"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeModal('jobModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Submit</button>
+        </div>
+      </form>
     </div>
+  </div>
 
-    <!-- Companies Section -->
-    <div id="companiesSection" class="section">
-      <div class="section-header">
-        <h2>Companies</h2>
-        <button class="btn-primary" onclick="showAddCompanyForm()">Add Company</button>
+  <div id="companyModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Add New Company</h2>
+        <button class="close-modal" onclick="closeModal('companyModal')">&times;</button>
       </div>
-      
-      <div id="addCompanyForm" class="form-container" style="display: none;">
-        <h3>Add New Company</h3>
-        <form id="companyForm">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Company Name</label>
-              <input type="text" id="companyName" required>
-            </div>
-            <div class="form-group">
-              <label>Industry</label>
-              <input type="text" id="companyIndustry">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Location</label>
-              <input type="text" id="companyLocation">
-            </div>
-            <div class="form-group">
-              <label>Website</label>
-              <input type="url" id="companyWebsite">
-            </div>
+      <form id="companyForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Company Name *</label>
+            <input type="text" id="companyName" required>
           </div>
           <div class="form-group">
-            <label>Description</label>
-            <textarea id="companyDescription" rows="3"></textarea>
+            <label>Industry</label>
+            <input type="text" id="companyIndustry">
+          </div>
+          <div class="form-group">
+            <label>Location</label>
+            <input type="text" id="companyLocation">
+          </div>
+          <div class="form-group">
+            <label>Website</label>
+            <input type="url" id="companyWebsite">
           </div>
           <div class="form-group">
             <label>Number of Employees</label>
             <input type="number" id="companyEmployees">
           </div>
-          <div class="form-actions">
-            <button type="submit" class="btn-primary">Submit</button>
-            <button type="button" class="btn-secondary" onclick="hideAddCompanyForm()">Cancel</button>
-          </div>
-        </form>
-      </div>
-
-      <div id="companiesList" class="data-list"></div>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="companyDescription" rows="3"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeModal('companyModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Submit</button>
+        </div>
+      </form>
     </div>
+  </div>
 
-    <!-- Contacts Section -->
-    <div id="contactsSection" class="section">
-      <div class="section-header">
-        <h2>Contacts</h2>
-        <button class="btn-primary" onclick="showAddContactForm()">Add Contact</button>
+  <div id="contactModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Add New Contact</h2>
+        <button class="close-modal" onclick="closeModal('contactModal')">&times;</button>
       </div>
-      
-      <div id="addContactForm" class="form-container" style="display: none;">
-        <h3>Add New Contact</h3>
-        <form id="contactForm">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Company</label>
-              <select id="contactCompanyId" required></select>
-            </div>
-            <div class="form-group">
-              <label>Contact Name</label>
-              <input type="text" id="contactName" required>
-            </div>
+      <form id="contactForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Company *</label>
+            <select id="contactCompanyId" required></select>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Job Title</label>
-              <input type="text" id="contactJobTitle">
-            </div>
-            <div class="form-group">
-              <label>Email</label>
-              <input type="email" id="contactEmail">
-            </div>
+          <div class="form-group">
+            <label>Contact Name *</label>
+            <input type="text" id="contactName" required>
+          </div>
+          <div class="form-group">
+            <label>Job Title</label>
+            <input type="text" id="contactJobTitle">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="contactEmail">
           </div>
           <div class="form-group">
             <label>Phone</label>
             <input type="tel" id="contactPhone">
           </div>
-          <div class="form-actions">
-            <button type="submit" class="btn-primary">Submit</button>
-            <button type="button" class="btn-secondary" onclick="hideAddContactForm()">Cancel</button>
-          </div>
-        </form>
-      </div>
-
-      <div id="contactsList" class="data-list"></div>
-    </div>
-
-    <!-- Profile Section -->
-    <div id="profileSection" class="section">
-      <div class="section-header">
-        <h2>My Profile</h2>
-      </div>
-      
-      <div class="form-container">
-        <form id="profileForm">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Full Name</label>
-              <input type="text" id="profileFullName" required>
-            </div>
-            <div class="form-group">
-              <label>Email</label>
-              <input type="email" id="profileEmail" disabled>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Phone</label>
-              <input type="tel" id="profilePhone">
-            </div>
-            <div class="form-group">
-              <label>Location</label>
-              <input type="text" id="profileLocation">
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Gender</label>
-            <select id="profileSex">
-              <option value="">Select</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <button type="submit" class="btn-primary">Update Profile</button>
-        </form>
-      </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeModal('contactModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Submit</button>
+        </div>
+      </form>
     </div>
   </div>
 
