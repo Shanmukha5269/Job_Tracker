@@ -144,3 +144,31 @@ window.addEventListener('load', () => {
     document.body.style.opacity = '1';
   }, 100);
 });
+
+function showUserFlow(type) {
+  // Toggle tab buttons
+  document.querySelectorAll('.tab-button').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  event.target.classList.add('active');
+
+  // Toggle flow content
+  if (type === 'seeker') {
+    document.getElementById('seekerFlow').style.display = 'grid';
+    document.getElementById('employerFlow').style.display = 'none';
+  } else {
+    document.getElementById('seekerFlow').style.display = 'none';
+    document.getElementById('employerFlow').style.display = 'grid';
+  }
+}
+
+// Check URL parameters for user type
+window.addEventListener('DOMContentLoaded', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const userType = urlParams.get('type');
+  
+  if (userType === 'employer') {
+    // Scroll to employer section
+    document.getElementById('for-employers')?.scrollIntoView({ behavior: 'smooth' });
+  }
+});

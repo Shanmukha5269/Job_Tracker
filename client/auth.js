@@ -25,12 +25,24 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password, user_type: 'job_seeker' })  // ← Enforce job seeker type
     });
 
     const data = await response.json();
 
     if (response.ok) {
+      // STRICT CHECK: Only allow job seekers
+      if (data.user.user_type !== 'job_seeker') {
+        messageEl.textContent = 'This account is registered as an employer. Please use the employer login portal.';
+        messageEl.className = 'message error';
+        
+        // Show link to employer portal
+        setTimeout(() => {
+          messageEl.innerHTML = 'This is an employer account. <a href="employer-auth.html" style="color: #667eea; font-weight: 600;">Click here to login as employer</a>';
+        }, 2000);
+        return;
+      }
+
       messageEl.textContent = 'Login successful! Redirecting...';
       messageEl.className = 'message success';
       localStorage.setItem('user', JSON.stringify(data.user));
@@ -42,6 +54,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       messageEl.className = 'message error';
     }
   } catch (error) {
+    console.error('Login error:', error);
     messageEl.textContent = 'Connection error. Please try again.';
     messageEl.className = 'message error';
   }
@@ -80,6 +93,7 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
       messageEl.className = 'message error';
     }
   } catch (error) {
+    console.error('Registration error:', error);
     messageEl.textContent = 'Connection error. Please try again.';
     messageEl.className = 'message error';
   }

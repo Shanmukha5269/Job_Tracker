@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Tracker - Employer Portal</title>
+  <link rel="stylesheet" href="employer-auth-styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="container">
+    <div class="auth-box-employer">
+      <div class="employer-header">
+        <div class="logo">
+          <i class="fas fa-briefcase"></i>
+          <span>Job Tracker</span>
+        </div>
+        <h1>Employer Portal</h1>
+        <p class="subtitle">Post jobs and find the perfect candidates for your company</p>
+      </div>
+      
+      <div class="tab-buttons">
+        <button class="tab-btn active" onclick="showEmployerLogin()">Login</button>
+        <button class="tab-btn" onclick="showEmployerRegister()">Register Company</button>
+      </div>
+
+      <!-- Employer Login Form -->
+      <form id="employerLoginForm" class="auth-form">
+        <div class="form-group">
+          <label for="empLoginEmail"><i class="fas fa-envelope"></i> Company Email</label>
+          <input type="email" id="empLoginEmail" placeholder="company@example.com" required>
+        </div>
+        <div class="form-group">
+          <label for="empLoginPassword"><i class="fas fa-lock"></i> Password</label>
+          <input type="password" id="empLoginPassword" placeholder="Enter your password" required>
+        </div>
+        <div class="form-options">
+          <label class="checkbox-label">
+            <input type="checkbox"> Remember me
+          </label>
+          <a href="#" class="forgot-link">Forgot password?</a>
+        </div>
+        <button type="submit" class="btn-primary-employer">
+          <i class="fas fa-sign-in-alt"></i> Login to Employer Dashboard
+        </button>
+        <p class="message" id="empLoginMessage"></p>
+      </form>
+
+      <!-- Employer Register Form -->
+      <form id="employerRegisterForm" class="auth-form" style="display: none;">
+        <div class="form-section">
+          <h3><i class="fas fa-building"></i> Company Information</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="empRegCompanyName">Company Name *</label>
+              <input type="text" id="empRegCompanyName" placeholder="e.g., Tech Solutions Inc." required>
+            </div>
+            <div class="form-group">
+              <label for="empRegIndustry">Industry</label>
+              <select id="empRegIndustry">
+                <option value="">Select Industry</option>
+                <option value="Technology">Technology</option>
+                <option value="Healthcare">Healthcare</option>
+                <option value="Finance">Finance</option>
+                <option value="Education">Education</option>
+                <option value="Manufacturing">Manufacturing</option>
+                <option value="Retail">Retail</option>
+                <option value="Consulting">Consulting</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="empRegWebsite">Company Website</label>
+              <input type="url" id="empRegWebsite" placeholder="https://www.company.com">
+            </div>
+            <div class="form-group">
+              <label for="empRegEmployees">Company Size</label>
+              <select id="empRegEmployees">
+                <option value="">Select Size</option>
+                <option value="1-10">1-10 employees</option>
+                <option value="11-50">11-50 employees</option>
+                <option value="51-200">51-200 employees</option>
+                <option value="201-500">201-500 employees</option>
+                <option value="501-1000">501-1000 employees</option>
+                <option value="1000+">1000+ employees</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="empRegLocation">Company Location *</label>
+            <input type="text" id="empRegLocation" placeholder="City, State/Country" required>
+          </div>
+
+          <div class="form-group">
+            <label for="empRegDescription">Company Description</label>
+            <textarea id="empRegDescription" rows="3" placeholder="Brief description about your company..."></textarea>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3><i class="fas fa-user-tie"></i> Contact Person Details</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="empRegFullName">Full Name *</label>
+              <input type="text" id="empRegFullName" placeholder="Your full name" required>
+            </div>
+            <div class="form-group">
+              <label for="empRegJobTitle">Job Title</label>
+              <input type="text" id="empRegJobTitle" placeholder="e.g., HR Manager, CEO">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="empRegEmail">Work Email *</label>
+              <input type="email" id="empRegEmail" placeholder="yourname@company.com" required>
+            </div>
+            <div class="form-group">
+              <label for="empRegPhone">Phone Number *</label>
+              <input type="tel" id="empRegPhone" placeholder="+1 (555) 123-4567" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="empRegPassword">Password *</label>
+            <input type="password" id="empRegPassword" placeholder="Create a strong password (min 8 characters)" required>
+          </div>
+
+          <div class="form-group">
+            <label for="empRegConfirmPassword">Confirm Password *</label>
+            <input type="password" id="empRegConfirmPassword" placeholder="Re-enter your password" required>
+          </div>
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="empRegTerms" required>
+            <span>I agree to the <a href="#" target="_blank">Terms of Service</a> and <a href="#" target="_blank">Privacy Policy</a></span>
+          </label>
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="empRegMarketing">
+            <span>Send me updates about new features and hiring tips</span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn-primary-employer">
+          <i class="fas fa-check-circle"></i> Register Company & Start Hiring
+        </button>
+        <p class="message" id="empRegisterMessage"></p>
+      </form>
+
+      <div class="switch-user-type">
+        <p><i class="fas fa-user"></i> Looking for a job? <a href="index.html">Sign in as Job Seeker</a></p>
+      </div>
+
+      <div class="benefits-footer">
+        <h4>Why Choose Job Tracker for Hiring?</h4>
+        <div class="benefits-grid">
+          <div class="benefit-item">
+            <i class="fas fa-bolt"></i>
+            <span>Post jobs in minutes</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-users"></i>
+            <span>Access to qualified candidates</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-chart-line"></i>
+            <span>Track all applications</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-star"></i>
+            <span>Build your employer brand</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="employer-auth.js"></script>
+</body>
+</html>
