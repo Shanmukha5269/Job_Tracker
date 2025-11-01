@@ -118,21 +118,65 @@ async function loadApplications() {
 
 function displayApplications(applications) {
   const listEl = document.getElementById('applicationsList');
-  listEl.innerHTML = applications.length === 0 
-    ? '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">No applications yet. Browse jobs and apply!</p>'
-    : applications.map(app => `
-      <div class="data-card">
-        <h3>${app.job_title}</h3>
-        <p><strong>Company:</strong> ${app.company_name}</p>
-        <p><strong>Location:</strong> ${app.location || 'Not specified'}</p>
-        <p><strong>Type:</strong> ${app.employment_type}</p>
-        <p><strong>Applied:</strong> ${new Date(app.application_date).toLocaleDateString()}</p>
-        <span class="status-badge status-${app.status.toLowerCase().replace(/ /g, '-')}">${app.status}</span>
-        <div class="card-actions">
-          <button class="btn-small btn-delete" onclick="deleteApplication(${app.application_id})"><i class="fas fa-trash"></i> Delete</button>
+  
+  if (applications.length === 0) {
+    listEl.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-inbox"></i>
+        <h3>No applications yet</h3>
+        <p>Browse jobs and start applying to build your application history</p>
+        <button class="btn-apply-modern" onclick="showSection('jobs')">
+          <i class="fas fa-search"></i>
+          Browse Jobs
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  listEl.innerHTML = applications.map(app => `
+    <div class="application-card">
+      <div class="application-header">
+        <div class="application-title">
+          <h3>${app.job_title}</h3>
+          <div class="application-company">
+            <i class="fas fa-building"></i>
+            ${app.company_name}
+          </div>
+        </div>
+        <span class="application-status ${app.status.toLowerCase().replace(/ /g, '-')}">${app.status}</span>
+      </div>
+
+      <div class="application-details">
+        <div class="detail-item">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>${app.location || 'Not specified'}</span>
+        </div>
+        <div class="detail-item">
+          <i class="fas fa-briefcase"></i>
+          <span>${app.employment_type}</span>
+        </div>
+        <div class="detail-item">
+          <i class="fas fa-calendar"></i>
+          <strong>Applied:</strong> ${new Date(app.application_date).toLocaleDateString()}
         </div>
       </div>
-    `).join('');
+
+      ${app.cover_letter ? `
+        <div class="detail-item" style="margin-top: 12px;">
+          <i class="fas fa-file-alt"></i>
+          <span style="font-style: italic; color: #5f6368;">${app.cover_letter.substring(0, 100)}${app.cover_letter.length > 100 ? '...' : ''}</span>
+        </div>
+      ` : ''}
+
+      <div class="application-footer">
+        <button class="btn-save-job" onclick="deleteApplication(${app.application_id})">
+          <i class="fas fa-trash"></i>
+          Withdraw
+        </button>
+      </div>
+    </div>
+  `).join('');
 }
 
 function filterApplications() {
@@ -228,28 +272,138 @@ async function loadJobs() {
       '<p style="grid-column: 1/-1; text-align: center; color: red;">Error loading jobs</p>';
   }
 }
-
 function displayJobs(jobs) {
   const listEl = document.getElementById('jobsList');
-  listEl.innerHTML = jobs.length === 0 
-    ? '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">No jobs available at the moment.</p>'
-    : jobs.map(job => `
-      <div class="data-card">
-        <h3>${job.job_title}</h3>
-        <p><strong>Company:</strong> ${job.company_name}</p>
-        <p><strong>Location:</strong> ${job.location || 'Not specified'}</p>
-        <p><strong>Type:</strong> ${job.employment_type}</p>
-        <p><strong>Salary:</strong> ${job.salary_range || 'Not disclosed'}</p>
-        ${job.application_deadline ? `<p><strong>Deadline:</strong> ${new Date(job.application_deadline).toLocaleDateString()}</p>` : ''}
-        ${job.job_url ? `<p><a href="${job.job_url}" target="_blank" style="color: var(--primary-color);">View Posting <i class="fas fa-external-link-alt"></i></a></p>` : ''}
-        <div class="card-actions">
-          <button class="btn-small btn-apply" onclick="applyToJob(${job.job_id}, '${job.job_title}')">
-            <i class="fas fa-paper-plane"></i> Apply Now
-          </button>
+  
+  if (jobs.length === 0) {
+    listEl.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-briefcase"></i>
+        <h3>No jobs available</h3>
+        <p>Check back later for new opportunities</p>
+      </div>
+    `;
+    return;
+  }
+
+  listEl.innerHTML = jobs.map(job => {
+    const isApplied = allApplications.some(app => app.job_id === job.job_id);
+    const employmentTypeClass = `type-${job.employment_type.toLowerCase().replace(/ /g, '-')}`;
+    
+    return `
+      <div class="job-card" id="job-${job.job_id}">
+        <div class="job-card-header">
+          <div class="job-card-title">
+            <h3 onclick="toggleJobDetails(${job.job_id})">${job.job_title}</h3>
+            <div class="job-card-company">
+              <div class="company-icon">
+                <i class="fas fa-building"></i>
+              </div>
+              <span class="company-name">${job.company_name}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="job-card-meta">
+          <div class="meta-item">
+            <i class="fas fa-map-marker-alt"></i>
+            <span>${job.location || 'Location not specified'}</span>
+          </div>
+          ${job.salary_range ? `
+            <div class="meta-item">
+              <i class="fas fa-dollar-sign"></i>
+              <span>${job.salary_range}</span>
+            </div>
+          ` : ''}
+          ${job.application_deadline ? `
+            <div class="meta-item">
+              <i class="fas fa-clock"></i>
+              <span>Deadline: ${new Date(job.application_deadline).toLocaleDateString()}</span>
+            </div>
+          ` : ''}
+        </div>
+
+        <div class="job-card-tags">
+          <span class="job-tag ${employmentTypeClass}">${job.employment_type}</span>
+          ${job.job_url ? '<span class="job-tag"><i class="fas fa-external-link-alt"></i> External</span>' : ''}
+        </div>
+
+        ${job.job_description ? `
+          <div class="job-card-description" id="desc-${job.job_id}">
+            ${job.job_description}
+          </div>
+          <div class="job-qualifications" id="qual-${job.job_id}">
+            <h4>Minimum qualifications</h4>
+            <ul>
+              <li>Bachelor's degree or equivalent practical experience</li>
+              <li>Relevant work experience in the field</li>
+            </ul>
+          </div>
+        ` : ''}
+
+        <div class="job-card-footer">
+          <div class="job-posted-date">
+            <i class="far fa-calendar"></i>
+            Posted ${formatDate(job.posted_date || job.created_at)}
+          </div>
+          <div class="job-actions">
+            ${job.job_description ? `
+              <button class="btn-learn-more" onclick="toggleJobDetails(${job.job_id})">
+                <i class="fas fa-chevron-down" id="chevron-${job.job_id}"></i>
+                Learn more
+              </button>
+            ` : ''}
+            ${job.job_url ? `
+              <a href="${job.job_url}" target="_blank" class="btn-save-job">
+                <i class="fas fa-external-link-alt"></i>
+                View Posting
+              </a>
+            ` : ''}
+            <button class="btn-apply-modern" 
+                    onclick="applyToJob(${job.job_id}, '${job.job_title.replace(/'/g, "\\'")}')"
+                    ${isApplied ? 'disabled' : ''}>
+              <i class="fas ${isApplied ? 'fa-check' : 'fa-paper-plane'}"></i>
+              ${isApplied ? 'Applied' : 'Apply'}
+            </button>
+          </div>
         </div>
       </div>
-    `).join('');
+    `;
+  }).join('');
 }
+
+// Toggle job details expansion
+function toggleJobDetails(jobId) {
+  const descEl = document.getElementById(`desc-${jobId}`);
+  const qualEl = document.getElementById(`qual-${jobId}`);
+  const chevron = document.getElementById(`chevron-${jobId}`);
+  
+  if (descEl) {
+    descEl.classList.toggle('expanded');
+  }
+  if (qualEl) {
+    qualEl.classList.toggle('show');
+  }
+  if (chevron) {
+    chevron.classList.toggle('fa-chevron-down');
+    chevron.classList.toggle('fa-chevron-up');
+  }
+}
+
+// Format date helper
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffTime = Math.abs(now - date);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+  return date.toLocaleDateString();
+}
+
 
 // Apply to Job Function
 async function applyToJob(jobId, jobTitle) {

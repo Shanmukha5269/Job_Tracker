@@ -165,51 +165,52 @@
         </div>
       </section>
 
-      <!-- Applications Section -->
-      <section id="applicationsSection" class="content-section">
-        <div class="section-header">
-          <h1>My Applications</h1>
-          <button class="btn-primary" onclick="showAddApplicationModal()">
-            <i class="fas fa-plus"></i> Add Application
-          </button>
-        </div>
-        
-        <div class="filters-bar">
-          <select id="statusFilter" onchange="filterApplications()">
-            <option value="">All Status</option>
-            <option value="Applied">Applied</option>
-            <option value="In Review">In Review</option>
-            <option value="Interview Scheduled">Interview Scheduled</option>
-            <option value="Rejected">Rejected</option>
-            <option value="Accepted">Accepted</option>
-            <option value="Withdrawn">Withdrawn</option>
-          </select>
-          <input type="text" id="searchApplications" placeholder="Search applications..." onkeyup="searchApplications()">
-        </div>
-
-        <div id="applicationsList" class="cards-grid"></div>
-      </section>
-
       <!-- Jobs Section -->
-      <section id="jobsSection" class="content-section">
-        <div class="section-header">
-          <h1>Available Jobs</h1>
-        </div>
-        
-        <div class="filters-bar">
-          <select id="employmentTypeFilter" onchange="filterJobs()">
-            <option value="">All Types</option>
-            <option value="Full-time">Full-time</option>
-            <option value="Part-time">Part-time</option>
-            <option value="Contract">Contract</option>
-            <option value="Internship">Internship</option>
-            <option value="Remote">Remote</option>
-          </select>
-          <input type="text" id="searchJobs" placeholder="Search jobs..." onkeyup="searchJobs()">
-        </div>
+<section id="jobsSection" class="content-section">
+  <div class="section-header">
+    <h1>Available Jobs</h1>
+  </div>
+  
+  <div class="filters-bar-modern">
+    <select id="employmentTypeFilter" class="filter-select" onchange="filterJobs()">
+      <option value="">All job types</option>
+      <option value="Full-time">Full-time</option>
+      <option value="Part-time">Part-time</option>
+      <option value="Contract">Contract</option>
+      <option value="Internship">Internship</option>
+      <option value="Remote">Remote</option>
+    </select>
+    <input type="text" id="searchJobs" class="search-input-modern" placeholder="Search by title, company, or location" onkeyup="searchJobs()">
+  </div>
 
-        <div id="jobsList" class="cards-grid"></div>
-      </section>
+  <div id="jobsList"></div>
+</section>
+
+<!-- Applications Section -->
+<section id="applicationsSection" class="content-section">
+  <div class="section-header">
+    <h1>My Applications</h1>
+    <button class="btn-apply-modern" onclick="showSection('jobs')">
+      <i class="fas fa-plus"></i> Find More Jobs
+    </button>
+  </div>
+  
+  <div class="filters-bar-modern">
+    <select id="statusFilter" class="filter-select" onchange="filterApplications()">
+      <option value="">All statuses</option>
+      <option value="Applied">Applied</option>
+      <option value="In Review">In Review</option>
+      <option value="Interview Scheduled">Interview Scheduled</option>
+      <option value="Rejected">Rejected</option>
+      <option value="Accepted">Accepted</option>
+      <option value="Withdrawn">Withdrawn</option>
+    </select>
+    <input type="text" id="searchApplications" class="search-input-modern" placeholder="Search applications..." onkeyup="searchApplications()">
+  </div>
+
+  <div id="applicationsList"></div>
+</section>
+
 
       <!-- Companies Section -->
       <section id="companiesSection" class="content-section">
