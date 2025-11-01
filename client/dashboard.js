@@ -459,9 +459,7 @@ function searchJobs() {
   displayJobs(filtered);
 }
 
-// REMOVED: Job creation/deletion for job seekers - they can only view and apply
-
-// ==================== COMPANIES ====================
+// ==================== COMPANIES (JOB SEEKER VIEW) ====================
 async function loadCompanies() {
   try {
     const response = await fetch(`${API_URL}/companies`);
@@ -476,20 +474,120 @@ async function loadCompanies() {
 
 function displayCompanies(companies) {
   const listEl = document.getElementById('companiesList');
-  listEl.innerHTML = companies.length === 0 
-    ? '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">No companies registered yet.</p>'
-    : companies.map(company => `
-      <div class="data-card">
-        <h3>${company.company_name}</h3>
-        <p><strong>Industry:</strong> ${company.industry || 'Not specified'}</p>
-        <p><strong>Location:</strong> ${company.location || 'Not specified'}</p>
-        <p><strong>Employees:</strong> ${company.no_of_employees || 'Not specified'}</p>
-        ${company.website ? `<p><a href="${company.website}" target="_blank" style="color: var(--primary-color);">Visit Website <i class="fas fa-external-link-alt"></i></a></p>` : ''}
-        ${company.description ? `<p style="margin-top: 10px; font-size: 13px;">${company.description.substring(0, 100)}${company.description.length > 100 ? '...' : ''}</p>` : ''}
+  
+  if (companies.length === 0) {
+    listEl.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-building"></i>
+        <h3>No companies registered yet</h3>
+        <p>Companies will appear here as they join the platform</p>
       </div>
-    `).join('');
-  // REMOVED: Delete button - job seekers can only view companies
+    `;
+    return;
+  }
+
+  listEl.innerHTML = companies.map(company => {
+    const industryClass = company.industry ? company.industry.toLowerCase() : 'default';
+    const companyInitial = company.company_name.substring(0, 1).toUpperCase();
+    
+    return `
+      <div class="company-card">
+        <div class="company-card-banner ${industryClass}"></div>
+        <div class="company-logo-wrapper">
+          <div class="company-logo">${companyInitial}</div>
+        </div>
+        <div class="company-card-body">
+          <div class="company-card-header">
+            <h3 class="company-card-name">${company.company_name}</h3>
+            ${company.industry ? `<span class="company-card-industry">${company.industry}</span>` : ''}
+          </div>
+
+          <div class="company-card-meta">
+            ${company.location ? `
+              <div class="company-meta-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>${company.location}</span>
+              </div>
+            ` : ''}
+            ${company.no_of_employees ? `
+              <div class="company-meta-item">
+                <i class="fas fa-users"></i>
+                <span>${company.no_of_employees} employees</span>
+              </div>
+            ` : ''}
+          </div>
+
+          ${company.description ? `
+            <p class="company-card-description">${company.description}</p>
+          ` : ''}
+
+          <div class="company-card-stats">
+            <div class="company-stat">
+              <span class="company-stat-number" id="jobCount-${company.company_id}">0</span>
+              <span class="company-stat-label">Open Jobs</span>
+            </div>
+            <div class="company-stat">
+              <span class="company-stat-number">${company.is_verified ? '✓' : '—'}</span>
+              <span class="company-stat-label">Verified</span>
+            </div>
+          </div>
+
+          <div class="company-card-footer">
+            <button class="btn-view-company" onclick="viewCompanyJobs(${company.company_id}, '${company.company_name.replace(/'/g, "\\'")}')">
+              <i class="fas fa-briefcase"></i>
+              View Jobs
+            </button>
+            ${company.website ? `
+              <a href="${company.website}" target="_blank" class="btn-company-website">
+                <i class="fas fa-external-link-alt"></i>
+                Website
+              </a>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Load job counts for each company
+  companies.forEach(company => {
+    loadCompanyJobCount(company.company_id);
+  });
 }
+
+async function loadCompanyJobCount(companyId) {
+  try {
+    const response = await fetch(`${API_URL}/jobs/company/${companyId}`);
+    const jobs = await response.json();
+    const countEl = document.getElementById(`jobCount-${companyId}`);
+    if (countEl) {
+      countEl.textContent = jobs.length;
+    }
+  } catch (error) {
+    console.error('Error loading job count:', error);
+  }
+}
+
+function viewCompanyJobs(companyId, companyName) {
+  showSection('jobs');
+  // Filter jobs by company
+  const companyJobs = allJobs.filter(job => job.company_id === companyId);
+  displayJobs(companyJobs);
+  
+  // Update header to show we're filtering
+  document.querySelector('#jobsSection .section-header h1').textContent = `Jobs at ${companyName}`;
+}
+
+function searchCompanies() {
+  const query = document.getElementById('searchCompanies').value.toLowerCase();
+  const filtered = allCompanies.filter(company => 
+    company.company_name.toLowerCase().includes(query) ||
+    (company.industry && company.industry.toLowerCase().includes(query)) ||
+    (company.location && company.location.toLowerCase().includes(query))
+  );
+  displayCompanies(filtered);
+}
+
 
 function searchCompanies() {
   const query = document.getElementById('searchCompanies').value.toLowerCase();

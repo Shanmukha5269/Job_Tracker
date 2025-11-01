@@ -115,26 +115,49 @@
         </div>
       </section>
 
-      <!-- Jobs Section -->
-      <section id="jobsSection" class="content-section">
-        <div class="section-header">
-          <h1>My Job Listings</h1>
-          <button class="btn-primary" onclick="showAddJobModal()">
-            <i class="fas fa-plus"></i> Post New Job
-          </button>
-        </div>
-        
-        <div id="jobsList" class="cards-grid"></div>
-      </section>
+      <!-- Jobs Section (Employer Dashboard) -->
+<section id="jobsSection" class="content-section">
+  <div class="section-header">
+    <h1>My Job Listings</h1>
+    <button class="btn-apply-modern" onclick="showAddJobModal()">
+      <i class="fas fa-plus"></i> Post New Job
+    </button>
+  </div>
+  
+  <div class="filters-bar-modern">
+    <select id="jobStatusFilter" class="filter-select" onchange="filterJobs()">
+      <option value="">All jobs</option>
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+    </select>
+    <input type="text" id="searchJobs" class="search-input-modern" placeholder="Search jobs..." onkeyup="searchJobs()">
+  </div>
 
-      <!-- Applications Section -->
-      <section id="applicationsSection" class="content-section">
-        <div class="section-header">
-          <h1>Received Applications</h1>
-        </div>
-        
-        <div id="applicationsList" class="cards-grid"></div>
-      </section>
+  <div id="jobsList"></div>
+</section>
+
+
+      <!-- Applications Section (Employer Dashboard) -->
+<section id="applicationsSection" class="content-section">
+  <div class="section-header">
+    <h1>Received Applications</h1>
+  </div>
+  
+  <div class="filters-bar-modern">
+    <select id="statusFilter" class="filter-select" onchange="filterApplications()">
+      <option value="">All statuses</option>
+      <option value="Applied">Applied</option>
+      <option value="In Review">In Review</option>
+      <option value="Interview Scheduled">Interview Scheduled</option>
+      <option value="Rejected">Rejected</option>
+      <option value="Accepted">Accepted</option>
+    </select>
+    <input type="text" id="searchApplications" class="search-input-modern" placeholder="Search by applicant name or email..." onkeyup="searchApplications()">
+  </div>
+
+  <div id="applicationsList"></div>
+</section>
+
 
       <!-- Company Profile Section -->
       <section id="companySection" class="content-section">

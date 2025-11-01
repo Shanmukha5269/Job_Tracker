@@ -2,6 +2,7 @@ const API_URL = 'http://localhost:3000/api';
 let currentUser = null;
 let currentCompany = null;
 let allApplications = [];
+let allJobs = [];
 
 window.addEventListener('DOMContentLoaded', () => {
   const userData = localStorage.getItem('user');
@@ -71,13 +72,14 @@ function closeModal(modalId) {
   document.getElementById(modalId).classList.remove('active');
 }
 
+// ==================== JOBS ====================
 async function loadJobs() {
   try {
     const response = await fetch(`${API_URL}/jobs/company/${currentCompany.company_id}`);
-    const jobs = await response.json();
+    allJobs = await response.json();
     
-    document.getElementById('totalJobs').textContent = jobs.length;
-    displayJobs(jobs);
+    document.getElementById('totalJobs').textContent = allJobs.length;
+    displayJobs(allJobs);
   } catch (error) {
     console.error('Error loading jobs:', error);
   }
@@ -85,25 +87,121 @@ async function loadJobs() {
 
 function displayJobs(jobs) {
   const listEl = document.getElementById('jobsList');
-  listEl.innerHTML = jobs.length === 0 
-    ? '<p style="grid-column: 1/-1; text-align: center;">No jobs posted yet. Create your first job!</p>'
-    : jobs.map(job => `
-      <div class="data-card">
-        <h3>${job.job_title}</h3>
-        <p><strong>Type:</strong> ${job.employment_type}</p>
-        <p><strong>Location:</strong> ${job.location || 'Not specified'}</p>
-        <p><strong>Salary:</strong> ${job.salary_range || 'Not disclosed'}</p>
-        <p><strong>Posted:</strong> ${new Date(job.posted_date || job.created_at).toLocaleDateString()}</p>
-        <div class="card-actions">
-          <button class="btn-small btn-delete" onclick="deleteJob(${job.job_id})">
-            <i class="fas fa-trash"></i> Delete
-          </button>
+  
+  if (jobs.length === 0) {
+    listEl.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-briefcase"></i>
+        <h3>No jobs posted yet</h3>
+        <p>Create your first job posting to start attracting candidates</p>
+        <button class="btn-apply-modern" onclick="showAddJobModal()">
+          <i class="fas fa-plus"></i>
+          Post Your First Job
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  listEl.innerHTML = jobs.map(job => `
+    <div class="employer-job-card">
+      <div class="employer-job-header">
+        <div class="employer-job-title">
+          <h3>${job.job_title}</h3>
+          <div class="employer-job-meta">
+            <div class="meta-item">
+              <i class="fas fa-map-marker-alt"></i>
+              <span>${job.location || 'Remote'}</span>
+            </div>
+            <div class="meta-item">
+              <i class="fas fa-briefcase"></i>
+              <span>${job.employment_type}</span>
+            </div>
+            ${job.salary_range ? `
+              <div class="meta-item">
+                <i class="fas fa-dollar-sign"></i>
+                <span>${job.salary_range}</span>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+        <span class="job-status-badge ${job.is_active ? 'active' : 'inactive'}">
+          ${job.is_active ? 'Active' : 'Inactive'}
+        </span>
+      </div>
+
+      <div class="employer-job-stats">
+        <div class="job-stat">
+          <span class="job-stat-number" id="appCount-${job.job_id}">0</span>
+          <span class="job-stat-label">Applications</span>
+        </div>
+        <div class="job-stat">
+          <span class="job-stat-number">${formatDate(job.posted_date || job.created_at)}</span>
+          <span class="job-stat-label">Posted</span>
         </div>
       </div>
-    `).join('');
+
+      <div class="employer-job-footer">
+        <button class="btn-view-applications" onclick="viewJobApplications(${job.job_id}, '${job.job_title.replace(/'/g, "\\'")}')">
+          <i class="fas fa-users"></i>
+          View Applications
+        </button>
+        <button class="btn-delete-job" onclick="deleteJob(${job.job_id})">
+          <i class="fas fa-trash"></i>
+          Delete
+        </button>
+      </div>
+    </div>
+  `).join('');
+
+  jobs.forEach(job => {
+    loadJobApplicationCount(job.job_id);
+  });
 }
 
-// FIXED: Load applications for employer's jobs
+async function loadJobApplicationCount(jobId) {
+  try {
+    const jobApps = allApplications.filter(app => app.job_id === jobId);
+    const countEl = document.getElementById(`appCount-${jobId}`);
+    if (countEl) {
+      countEl.textContent = jobApps.length;
+    }
+  } catch (error) {
+    console.error('Error loading application count:', error);
+  }
+}
+
+function viewJobApplications(jobId, jobTitle) {
+  showSection('applications');
+  const jobApps = allApplications.filter(app => app.job_id === jobId);
+  displayApplications(jobApps);
+  document.querySelector('#applicationsSection .section-header h1').textContent = `Applications for ${jobTitle}`;
+}
+
+function filterJobs() {
+  const status = document.getElementById('jobStatusFilter').value;
+  let filtered = allJobs;
+  
+  if (status === 'active') {
+    filtered = allJobs.filter(job => job.is_active);
+  } else if (status === 'inactive') {
+    filtered = allJobs.filter(job => !job.is_active);
+  }
+  
+  displayJobs(filtered);
+}
+
+function searchJobs() {
+  const query = document.getElementById('searchJobs').value.toLowerCase();
+  const filtered = allJobs.filter(job => 
+    job.job_title.toLowerCase().includes(query) ||
+    (job.location && job.location.toLowerCase().includes(query)) ||
+    job.employment_type.toLowerCase().includes(query)
+  );
+  displayJobs(filtered);
+}
+
+// ==================== APPLICATIONS ====================
 async function loadApplications() {
   try {
     const response = await fetch(`${API_URL}/applications/company/${currentCompany.company_id}`);
@@ -114,45 +212,117 @@ async function loadApplications() {
   } catch (error) {
     console.error('Error loading applications:', error);
     document.getElementById('applicationsList').innerHTML = 
-      '<p style="grid-column: 1/-1; text-align: center; color: red;">Error loading applications</p>';
+      '<p style="text-align: center; color: red;">Error loading applications</p>';
   }
 }
 
 function displayApplications(applications) {
   const listEl = document.getElementById('applicationsList');
-  listEl.innerHTML = applications.length === 0 
-    ? '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">No applications received yet.</p>'
-    : applications.map(app => `
-      <div class="data-card">
-        <h3>${app.full_name}</h3>
-        <p><strong>Applied for:</strong> ${app.job_title}</p>
-        <p><strong>Email:</strong> <a href="mailto:${app.email}" style="color: var(--primary-color);">${app.email}</a></p>
-        <p><strong>Phone:</strong> ${app.phone || 'Not provided'}</p>
-        <p><strong>Location:</strong> ${app.location || 'Not specified'}</p>
-        <p><strong>Applied on:</strong> ${new Date(app.application_date).toLocaleDateString()}</p>
-        <span class="status-badge status-${app.status.toLowerCase().replace(/ /g, '-')}">${app.status}</span>
-        ${app.resume ? `<p style="margin-top: 10px;"><a href="${app.resume}" target="_blank" style="color: var(--primary-color);"><i class="fas fa-file-pdf"></i> View Resume</a></p>` : ''}
-        <div class="card-actions">
-          <button class="btn-small btn-edit" onclick="updateApplicationStatus(${app.application_id}, '${app.status}')">
-            <i class="fas fa-edit"></i> Update Status
+  
+  if (applications.length === 0) {
+    listEl.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-inbox"></i>
+        <h3>No applications received yet</h3>
+        <p>Applications will appear here when candidates apply to your posted jobs</p>
+        <button class="btn-apply-modern" onclick="showSection('jobs')">
+          <i class="fas fa-briefcase"></i>
+          View My Jobs
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  listEl.innerHTML = applications.map(app => {
+    const applicantInitials = app.full_name.split(' ').map(n => n[0]).join('').toUpperCase();
+    
+    return `
+      <div class="application-card">
+        <div class="application-header">
+          <div class="application-title" style="display: flex; align-items: center; gap: 16px;">
+            <div class="applicant-avatar" style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700;">
+              ${applicantInitials}
+            </div>
+            <div>
+              <h3>${app.full_name}</h3>
+              <div class="application-company">
+                <i class="fas fa-briefcase"></i>
+                Applied for: ${app.job_title}
+              </div>
+            </div>
+          </div>
+          <span class="application-status ${app.status.toLowerCase().replace(/ /g, '-')}">${app.status}</span>
+        </div>
+
+        <div class="application-details">
+          <div class="detail-item">
+            <i class="fas fa-envelope"></i>
+            <a href="mailto:${app.email}" style="color: #1a73e8; text-decoration: none;">${app.email}</a>
+          </div>
+          ${app.phone ? `
+            <div class="detail-item">
+              <i class="fas fa-phone"></i>
+              <a href="tel:${app.phone}" style="color: #1a73e8; text-decoration: none;">${app.phone}</a>
+            </div>
+          ` : ''}
+          ${app.location ? `
+            <div class="detail-item">
+              <i class="fas fa-map-marker-alt"></i>
+              <span>${app.location}</span>
+            </div>
+          ` : ''}
+          <div class="detail-item">
+            <i class="fas fa-calendar"></i>
+            <strong>Applied:</strong> ${new Date(app.application_date).toLocaleDateString()}
+          </div>
+        </div>
+
+        ${app.cover_letter ? `
+          <div class="detail-item" style="margin-top: 12px; padding: 12px; background: #f8f9fa; border-radius: 8px;">
+            <div style="display: block; width: 100%;">
+              <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                <i class="fas fa-file-alt"></i>
+                <strong style="font-size: 13px; color: #202124;">Cover Letter</strong>
+              </div>
+              <p style="font-size: 13px; color: #5f6368; line-height: 1.6; margin: 0;">${app.cover_letter}</p>
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="application-footer">
+          <button class="btn-save-job" onclick="updateApplicationStatus(${app.application_id}, '${app.status}')">
+            <i class="fas fa-edit"></i>
+            Update Status
           </button>
+          ${app.resume ? `
+            <a href="${app.resume}" target="_blank" class="btn-apply-modern" style="text-decoration: none;">
+              <i class="fas fa-file-pdf"></i>
+              View Resume
+            </a>
+          ` : ''}
         </div>
       </div>
-    `).join('');
+    `;
+  }).join('');
 }
 
-// Update application status
 async function updateApplicationStatus(applicationId, currentStatus) {
   const statuses = ['Applied', 'In Review', 'Interview Scheduled', 'Rejected', 'Accepted'];
+  const currentIndex = statuses.indexOf(currentStatus);
   
-  const newStatus = prompt(
-    `Current Status: ${currentStatus}\n\nSelect new status:\n1. Applied\n2. In Review\n3. Interview Scheduled\n4. Rejected\n5. Accepted\n\nEnter number (1-5):`,
-    statuses.indexOf(currentStatus) + 1
+  const statusOptions = statuses.map((status, index) => 
+    `${index + 1}. ${status} ${index === currentIndex ? '(Current)' : ''}`
+  ).join('\n');
+  
+  const newStatusIndex = prompt(
+    `Update Application Status\n\n${statusOptions}\n\nEnter number (1-5):`,
+    currentIndex + 1
   );
 
-  if (!newStatus || newStatus < 1 || newStatus > 5) return;
+  if (!newStatusIndex || newStatusIndex < 1 || newStatusIndex > 5) return;
 
-  const statusToUpdate = statuses[parseInt(newStatus) - 1];
+  const statusToUpdate = statuses[parseInt(newStatusIndex) - 1];
 
   try {
     const response = await fetch(`${API_URL}/applications/${applicationId}`, {
@@ -162,17 +332,34 @@ async function updateApplicationStatus(applicationId, currentStatus) {
     });
 
     if (response.ok) {
-      alert(`Status updated to: ${statusToUpdate}`);
+      alert(`✓ Status updated to: ${statusToUpdate}`);
       loadApplications();
     } else {
-      alert('Failed to update status');
+      alert('Failed to update status. Please try again.');
     }
   } catch (error) {
     console.error('Error updating status:', error);
-    alert('Error updating status');
+    alert('Connection error. Please try again.');
   }
 }
 
+function filterApplications() {
+  const status = document.getElementById('statusFilter').value;
+  const filtered = status ? allApplications.filter(app => app.status === status) : allApplications;
+  displayApplications(filtered);
+}
+
+function searchApplications() {
+  const query = document.getElementById('searchApplications').value.toLowerCase();
+  const filtered = allApplications.filter(app => 
+    app.full_name.toLowerCase().includes(query) ||
+    app.email.toLowerCase().includes(query) ||
+    app.job_title.toLowerCase().includes(query)
+  );
+  displayApplications(filtered);
+}
+
+// ==================== COMPANY PROFILE ====================
 async function loadCompanyProfile() {
   document.getElementById('companyName').value = currentCompany.company_name;
   document.getElementById('industry').value = currentCompany.industry || '';
@@ -260,6 +447,19 @@ document.getElementById('companyForm').addEventListener('submit', async (e) => {
     alert('Failed to update profile');
   }
 });
+
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffTime = Math.abs(now - date);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+  return date.toLocaleDateString();
+}
 
 window.onclick = function(event) {
   if (event.target.classList.contains('modal')) {
