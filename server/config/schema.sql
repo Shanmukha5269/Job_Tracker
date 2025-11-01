@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS Companies (
   location VARCHAR(255),
   website VARCHAR(255),
   description TEXT,
-  no_of_employees INT,
+  no_of_employees VARCHAR(50),
   logo_url VARCHAR(500),
   is_verified BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

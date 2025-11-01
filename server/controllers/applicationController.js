@@ -18,6 +18,7 @@ exports.createApplication = async (req, res) => {
       applicationId: result.insertId 
     });
   } catch (error) {
+    console.error('Error creating application:', error);
     res.status(500).json({ error: 'Failed to create application', details: error.message });
   }
 };
@@ -35,6 +36,39 @@ exports.getApplicationsByUser = async (req, res) => {
     
     res.json(applications);
   } catch (error) {
+    console.error('Error fetching applications:', error);
+    res.status(500).json({ error: 'Failed to fetch applications', details: error.message });
+  }
+};
+
+// Get applications for a company's jobs
+exports.getApplicationsByCompany = async (req, res) => {
+  try {
+    const [applications] = await db.query(`
+      SELECT 
+        a.application_id,
+        a.application_date,
+        a.status,
+        a.resume,
+        a.cover_letter,
+        j.job_id,
+        j.job_title,
+        j.employment_type,
+        u.user_id,
+        u.full_name,
+        u.email,
+        u.phone,
+        u.location
+      FROM Applications a 
+      JOIN Jobs j ON a.job_id = j.job_id 
+      JOIN Users u ON a.user_id = u.user_id
+      WHERE j.company_id = ? 
+      ORDER BY a.application_date DESC
+    `, [req.params.companyId]);
+    
+    res.json(applications);
+  } catch (error) {
+    console.error('Error fetching company applications:', error);
     res.status(500).json({ error: 'Failed to fetch applications', details: error.message });
   }
 };
@@ -55,6 +89,7 @@ exports.getApplicationById = async (req, res) => {
 
     res.json(applications[0]);
   } catch (error) {
+    console.error('Error fetching application:', error);
     res.status(500).json({ error: 'Failed to fetch application', details: error.message });
   }
 };
@@ -70,6 +105,7 @@ exports.updateApplication = async (req, res) => {
 
     res.json({ message: 'Application updated successfully' });
   } catch (error) {
+    console.error('Error updating application:', error);
     res.status(500).json({ error: 'Failed to update application', details: error.message });
   }
 };
@@ -79,6 +115,7 @@ exports.deleteApplication = async (req, res) => {
     await db.query('DELETE FROM Applications WHERE application_id = ?', [req.params.id]);
     res.json({ message: 'Application deleted successfully' });
   } catch (error) {
+    console.error('Error deleting application:', error);
     res.status(500).json({ error: 'Failed to delete application', details: error.message });
   }
 };
@@ -95,6 +132,7 @@ exports.linkContactToApplication = async (req, res) => {
 
     res.status(201).json({ message: 'Contact linked to application successfully' });
   } catch (error) {
+    console.error('Error linking contact:', error);
     res.status(500).json({ error: 'Failed to link contact', details: error.message });
   }
 };

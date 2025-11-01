@@ -26,25 +26,22 @@ document.getElementById('employerLoginForm').addEventListener('submit', async (e
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, user_type: 'employer' })  // ← Enforce employer type
+      body: JSON.stringify({ email, password, user_type: 'employer' })
     });
 
     const data = await response.json();
 
     if (response.ok) {
-      // STRICT CHECK: Only allow employers
       if (data.user.user_type !== 'employer') {
         messageEl.textContent = 'This account is registered as a job seeker. Please use the job seeker login portal.';
         messageEl.className = 'message error';
-        
-        // Show link to job seeker portal
         setTimeout(() => {
           messageEl.innerHTML = 'This is a job seeker account. <a href="index.html" style="color: #1e3c72; font-weight: 600;">Click here to login as job seeker</a>';
         }, 2000);
         return;
       }
 
-      messageEl.textContent = 'Login successful! Redirecting to employer dashboard...';
+      messageEl.textContent = 'Login successful! Redirecting...';
       messageEl.className = 'message success';
       localStorage.setItem('user', JSON.stringify(data.user));
       localStorage.setItem('company', JSON.stringify(data.company));
@@ -71,6 +68,7 @@ document.getElementById('employerRegisterForm').addEventListener('submit', async
   const confirmPassword = document.getElementById('empRegConfirmPassword').value;
   const messageEl = document.getElementById('empRegisterMessage');
 
+  // Validation
   if (password !== confirmPassword) {
     messageEl.textContent = 'Passwords do not match!';
     messageEl.className = 'message error';
@@ -89,20 +87,28 @@ document.getElementById('employerRegisterForm').addEventListener('submit', async
     return;
   }
 
+  // Gather data - Contact Person Details are the user's credentials
   const userData = {
-    email: document.getElementById('empRegEmail').value,
-    password: password,
+    // Contact Person Details (this is the employer user account)
     full_name: document.getElementById('empRegFullName').value,
+    email: document.getElementById('empRegEmail').value,
     phone: document.getElementById('empRegPhone').value,
-    location: document.getElementById('empRegLocation').value,
+    password: password,
+    
+    // Company Information
     company_name: document.getElementById('empRegCompanyName').value,
     industry: document.getElementById('empRegIndustry').value,
+    location: document.getElementById('empRegLocation').value,
     website: document.getElementById('empRegWebsite').value,
     no_of_employees: document.getElementById('empRegEmployees').value,
     description: document.getElementById('empRegDescription').value
   };
 
-  console.log('Sending registration data:', userData);
+  console.log('Sending employer registration:', userData);
+
+  // Show loading state
+  messageEl.textContent = 'Creating your account...';
+  messageEl.className = 'message';
 
   try {
     const response = await fetch(`${API_URL}/auth/register-employer`, {
@@ -121,14 +127,16 @@ document.getElementById('employerRegisterForm').addEventListener('submit', async
       
       setTimeout(() => {
         showEmployerLogin();
+        messageEl.textContent = '';
       }, 2000);
     } else {
-      messageEl.textContent = data.error || 'Registration failed';
+      console.error('Registration failed:', data);
+      messageEl.textContent = data.details || data.error || 'Registration failed. Please check all fields.';
       messageEl.className = 'message error';
     }
   } catch (error) {
     console.error('Registration error:', error);
-    messageEl.textContent = 'Connection error. Please try again.';
+    messageEl.textContent = 'Connection error. Please check your internet and try again.';
     messageEl.className = 'message error';
   }
 });

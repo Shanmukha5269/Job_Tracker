@@ -1,6 +1,7 @@
 const API_URL = 'http://localhost:3000/api';
 let currentUser = null;
 let currentCompany = null;
+let allApplications = [];
 
 window.addEventListener('DOMContentLoaded', () => {
   const userData = localStorage.getItem('user');
@@ -24,7 +25,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 function initializeDashboard() {
-  const initials = currentCompany.company_name.substring(0, 2).toUpperCase();
+  const initials = currentCompany.company_name.substring(0, 1).toUpperCase();
   document.getElementById('userInitial').textContent = initials;
   document.getElementById('sidebarCompanyInitial').textContent = initials;
   document.getElementById('userName').textContent = currentCompany.company_name;
@@ -47,6 +48,9 @@ function showSection(sectionName) {
 
   document.getElementById(`${sectionName}Section`).classList.add('active');
   document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
+
+  if (sectionName === 'applications') loadApplications();
+  else if (sectionName === 'jobs') loadJobs();
 }
 
 function toggleUserDropdown() {
@@ -99,9 +103,74 @@ function displayJobs(jobs) {
     `).join('');
 }
 
+// FIXED: Load applications for employer's jobs
 async function loadApplications() {
-  // Placeholder - will implement later
-  document.getElementById('totalApplications').textContent = '0';
+  try {
+    const response = await fetch(`${API_URL}/applications/company/${currentCompany.company_id}`);
+    allApplications = await response.json();
+    
+    document.getElementById('totalApplications').textContent = allApplications.length;
+    displayApplications(allApplications);
+  } catch (error) {
+    console.error('Error loading applications:', error);
+    document.getElementById('applicationsList').innerHTML = 
+      '<p style="grid-column: 1/-1; text-align: center; color: red;">Error loading applications</p>';
+  }
+}
+
+function displayApplications(applications) {
+  const listEl = document.getElementById('applicationsList');
+  listEl.innerHTML = applications.length === 0 
+    ? '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">No applications received yet.</p>'
+    : applications.map(app => `
+      <div class="data-card">
+        <h3>${app.full_name}</h3>
+        <p><strong>Applied for:</strong> ${app.job_title}</p>
+        <p><strong>Email:</strong> <a href="mailto:${app.email}" style="color: var(--primary-color);">${app.email}</a></p>
+        <p><strong>Phone:</strong> ${app.phone || 'Not provided'}</p>
+        <p><strong>Location:</strong> ${app.location || 'Not specified'}</p>
+        <p><strong>Applied on:</strong> ${new Date(app.application_date).toLocaleDateString()}</p>
+        <span class="status-badge status-${app.status.toLowerCase().replace(/ /g, '-')}">${app.status}</span>
+        ${app.resume ? `<p style="margin-top: 10px;"><a href="${app.resume}" target="_blank" style="color: var(--primary-color);"><i class="fas fa-file-pdf"></i> View Resume</a></p>` : ''}
+        <div class="card-actions">
+          <button class="btn-small btn-edit" onclick="updateApplicationStatus(${app.application_id}, '${app.status}')">
+            <i class="fas fa-edit"></i> Update Status
+          </button>
+        </div>
+      </div>
+    `).join('');
+}
+
+// Update application status
+async function updateApplicationStatus(applicationId, currentStatus) {
+  const statuses = ['Applied', 'In Review', 'Interview Scheduled', 'Rejected', 'Accepted'];
+  
+  const newStatus = prompt(
+    `Current Status: ${currentStatus}\n\nSelect new status:\n1. Applied\n2. In Review\n3. Interview Scheduled\n4. Rejected\n5. Accepted\n\nEnter number (1-5):`,
+    statuses.indexOf(currentStatus) + 1
+  );
+
+  if (!newStatus || newStatus < 1 || newStatus > 5) return;
+
+  const statusToUpdate = statuses[parseInt(newStatus) - 1];
+
+  try {
+    const response = await fetch(`${API_URL}/applications/${applicationId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: statusToUpdate })
+    });
+
+    if (response.ok) {
+      alert(`Status updated to: ${statusToUpdate}`);
+      loadApplications();
+    } else {
+      alert('Failed to update status');
+    }
+  } catch (error) {
+    console.error('Error updating status:', error);
+    alert('Error updating status');
+  }
 }
 
 async function loadCompanyProfile() {

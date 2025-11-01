@@ -36,7 +36,6 @@ function initializeDashboard() {
 }
 
 function showSection(sectionName) {
-  // Remove active from all sections and nav items
   document.querySelectorAll('.content-section').forEach(section => {
     section.classList.remove('active');
   });
@@ -44,11 +43,9 @@ function showSection(sectionName) {
     item.classList.remove('active');
   });
 
-  // Add active to current section and nav item
   document.getElementById(`${sectionName}Section`).classList.add('active');
   document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
 
-  // Load section data
   if (sectionName === 'applications') loadApplications();
   else if (sectionName === 'jobs') loadJobs();
   else if (sectionName === 'companies') loadCompanies();
@@ -67,7 +64,6 @@ function logout() {
 }
 
 function toggleTheme() {
-  // Add theme toggle functionality if needed
   alert('Theme toggle feature coming soon!');
 }
 
@@ -95,14 +91,12 @@ function closeModal(modalId) {
   document.getElementById(modalId).classList.remove('active');
 }
 
-// Close modal when clicking outside
 window.onclick = function(event) {
   if (event.target.classList.contains('modal')) {
     event.target.classList.remove('active');
   }
 }
 
-// Close dropdown when clicking outside
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.user-menu')) {
     document.getElementById('userDropdown').classList.remove('active');
@@ -125,7 +119,7 @@ async function loadApplications() {
 function displayApplications(applications) {
   const listEl = document.getElementById('applicationsList');
   listEl.innerHTML = applications.length === 0 
-    ? '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">No applications yet. Add your first application!</p>'
+    ? '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">No applications yet. Browse jobs and apply!</p>'
     : applications.map(app => `
       <div class="data-card">
         <h3>${app.job_title}</h3>
@@ -135,7 +129,6 @@ function displayApplications(applications) {
         <p><strong>Applied:</strong> ${new Date(app.application_date).toLocaleDateString()}</p>
         <span class="status-badge status-${app.status.toLowerCase().replace(/ /g, '-')}">${app.status}</span>
         <div class="card-actions">
-          <button class="btn-small btn-edit" onclick="editApplication(${app.application_id})"><i class="fas fa-edit"></i> Edit</button>
           <button class="btn-small btn-delete" onclick="deleteApplication(${app.application_id})"><i class="fas fa-trash"></i> Delete</button>
         </div>
       </div>
@@ -190,14 +183,14 @@ document.getElementById('applicationForm').addEventListener('submit', async (e) 
     });
 
     if (response.ok) {
-      alert('Application added successfully!');
+      alert('Application submitted successfully!');
       closeModal('applicationModal');
       document.getElementById('applicationForm').reset();
       loadApplications();
       calculateStatistics();
     } else {
       const data = await response.json();
-      alert(data.error || 'Failed to add application');
+      alert(data.error || 'Failed to submit application');
     }
   } catch (error) {
     alert('Connection error. Please try again.');
@@ -239,7 +232,7 @@ async function loadJobs() {
 function displayJobs(jobs) {
   const listEl = document.getElementById('jobsList');
   listEl.innerHTML = jobs.length === 0 
-    ? '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">No jobs available. Add a new job!</p>'
+    ? '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">No jobs available at the moment.</p>'
     : jobs.map(job => `
       <div class="data-card">
         <h3>${job.job_title}</h3>
@@ -250,10 +243,50 @@ function displayJobs(jobs) {
         ${job.application_deadline ? `<p><strong>Deadline:</strong> ${new Date(job.application_deadline).toLocaleDateString()}</p>` : ''}
         ${job.job_url ? `<p><a href="${job.job_url}" target="_blank" style="color: var(--primary-color);">View Posting <i class="fas fa-external-link-alt"></i></a></p>` : ''}
         <div class="card-actions">
-          <button class="btn-small btn-delete" onclick="deleteJob(${job.job_id})"><i class="fas fa-trash"></i> Delete</button>
+          <button class="btn-small btn-apply" onclick="applyToJob(${job.job_id}, '${job.job_title}')">
+            <i class="fas fa-paper-plane"></i> Apply Now
+          </button>
         </div>
       </div>
     `).join('');
+}
+
+// Apply to Job Function
+async function applyToJob(jobId, jobTitle) {
+  // Check if already applied
+  const alreadyApplied = allApplications.some(app => app.job_id === jobId);
+  if (alreadyApplied) {
+    alert('You have already applied to this job!');
+    return;
+  }
+
+  if (!confirm(`Do you want to apply for "${jobTitle}"?`)) return;
+
+  const applicationData = {
+    user_id: currentUser.user_id,
+    job_id: jobId,
+    application_date: new Date().toISOString().split('T')[0],
+    status: 'Applied'
+  };
+
+  try {
+    const response = await fetch(`${API_URL}/applications`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(applicationData)
+    });
+
+    if (response.ok) {
+      alert('Application submitted successfully! Check "My Applications" to view it.');
+      loadApplications();
+      calculateStatistics();
+    } else {
+      const data = await response.json();
+      alert(data.error || 'Failed to submit application');
+    }
+  } catch (error) {
+    alert('Connection error. Please try again.');
+  }
 }
 
 function filterJobs() {
@@ -272,55 +305,7 @@ function searchJobs() {
   displayJobs(filtered);
 }
 
-document.getElementById('jobForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const jobData = {
-    company_id: document.getElementById('jobCompanyId').value,
-    job_title: document.getElementById('jobTitle').value,
-    job_description: document.getElementById('jobDescription').value,
-    location: document.getElementById('jobLocation').value,
-    employment_type: document.getElementById('jobEmploymentType').value,
-    salary_range: document.getElementById('jobSalary').value,
-    posted_date: document.getElementById('jobPostedDate').value,
-    application_deadline: document.getElementById('jobDeadline').value,
-    job_url: document.getElementById('jobUrl').value
-  };
-
-  try {
-    const response = await fetch(`${API_URL}/jobs`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(jobData)
-    });
-
-    if (response.ok) {
-      alert('Job added successfully!');
-      closeModal('jobModal');
-      document.getElementById('jobForm').reset();
-      loadJobs();
-    } else {
-      const data = await response.json();
-      alert(data.error || 'Failed to add job');
-    }
-  } catch (error) {
-    alert('Connection error. Please try again.');
-  }
-});
-
-async function deleteJob(id) {
-  if (!confirm('Are you sure you want to delete this job?')) return;
-  
-  try {
-    const response = await fetch(`${API_URL}/jobs/${id}`, { method: 'DELETE' });
-    if (response.ok) {
-      alert('Job deleted successfully!');
-      loadJobs();
-    }
-  } catch (error) {
-    alert('Failed to delete job');
-  }
-}
+// REMOVED: Job creation/deletion for job seekers - they can only view and apply
 
 // ==================== COMPANIES ====================
 async function loadCompanies() {
@@ -338,7 +323,7 @@ async function loadCompanies() {
 function displayCompanies(companies) {
   const listEl = document.getElementById('companiesList');
   listEl.innerHTML = companies.length === 0 
-    ? '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">No companies yet. Add a new company!</p>'
+    ? '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">No companies registered yet.</p>'
     : companies.map(company => `
       <div class="data-card">
         <h3>${company.company_name}</h3>
@@ -347,11 +332,9 @@ function displayCompanies(companies) {
         <p><strong>Employees:</strong> ${company.no_of_employees || 'Not specified'}</p>
         ${company.website ? `<p><a href="${company.website}" target="_blank" style="color: var(--primary-color);">Visit Website <i class="fas fa-external-link-alt"></i></a></p>` : ''}
         ${company.description ? `<p style="margin-top: 10px; font-size: 13px;">${company.description.substring(0, 100)}${company.description.length > 100 ? '...' : ''}</p>` : ''}
-        <div class="card-actions">
-          <button class="btn-small btn-delete" onclick="deleteCompany(${company.company_id})"><i class="fas fa-trash"></i> Delete</button>
-        </div>
       </div>
     `).join('');
+  // REMOVED: Delete button - job seekers can only view companies
 }
 
 function searchCompanies() {
@@ -363,66 +346,7 @@ function searchCompanies() {
   displayCompanies(filtered);
 }
 
-async function loadCompaniesForSelect(selectId) {
-  try {
-    const response = await fetch(`${API_URL}/companies`);
-    const companies = await response.json();
-    
-    const selectEl = document.getElementById(selectId);
-    selectEl.innerHTML = '<option value="">Select a company</option>' + 
-      companies.map(company => `<option value="${company.company_id}">${company.company_name}</option>`).join('');
-  } catch (error) {
-    console.error('Error loading companies for select:', error);
-  }
-}
-
-document.getElementById('companyForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const companyData = {
-    company_name: document.getElementById('companyName').value,
-    industry: document.getElementById('companyIndustry').value,
-    location: document.getElementById('companyLocation').value,
-    website: document.getElementById('companyWebsite').value,
-    description: document.getElementById('companyDescription').value,
-    no_of_employees: document.getElementById('companyEmployees').value
-  };
-
-  try {
-    const response = await fetch(`${API_URL}/companies`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(companyData)
-    });
-
-    if (response.ok) {
-      alert('Company added successfully!');
-      closeModal('companyModal');
-      document.getElementById('companyForm').reset();
-      loadCompanies();
-    } else {
-      const data = await response.json();
-      alert(data.error || 'Failed to add company');
-    }
-  } catch (error) {
-    alert('Connection error. Please try again.');
-  }
-});
-
-async function deleteCompany(id) {
-  if (!confirm('Are you sure you want to delete this company? This will also delete associated jobs.')) return;
-  
-  try {
-    const response = await fetch(`${API_URL}/companies/${id}`, { method: 'DELETE' });
-    if (response.ok) {
-      alert('Company deleted successfully!');
-      loadCompanies();
-      loadJobs(); // Reload jobs as they might be affected
-    }
-  } catch (error) {
-    alert('Failed to delete company');
-  }
-}
+// REMOVED: Company creation/deletion for job seekers
 
 // ==================== CONTACTS ====================
 async function loadContacts() {
@@ -440,7 +364,7 @@ async function loadContacts() {
 function displayContacts(contacts) {
   const listEl = document.getElementById('contactsList');
   listEl.innerHTML = contacts.length === 0 
-    ? '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">No contacts yet. Add a new contact!</p>'
+    ? '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">No contacts available yet.</p>'
     : contacts.map(contact => `
       <div class="data-card">
         <h3>${contact.contact_name}</h3>
@@ -448,11 +372,9 @@ function displayContacts(contacts) {
         <p><strong>Title:</strong> ${contact.job_title || 'Not specified'}</p>
         ${contact.email ? `<p><strong>Email:</strong> <a href="mailto:${contact.email}" style="color: var(--primary-color);">${contact.email}</a></p>` : ''}
         ${contact.phone ? `<p><strong>Phone:</strong> <a href="tel:${contact.phone}" style="color: var(--primary-color);">${contact.phone}</a></p>` : ''}
-        <div class="card-actions">
-          <button class="btn-small btn-delete" onclick="deleteContact(${contact.contact_id})"><i class="fas fa-trash"></i> Delete</button>
-        </div>
       </div>
     `).join('');
+  // REMOVED: Delete button - job seekers can only view contacts
 }
 
 function searchContacts() {
@@ -465,51 +387,7 @@ function searchContacts() {
   displayContacts(filtered);
 }
 
-document.getElementById('contactForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const contactData = {
-    company_id: document.getElementById('contactCompanyId').value,
-    contact_name: document.getElementById('contactName').value,
-    job_title: document.getElementById('contactJobTitle').value,
-    email: document.getElementById('contactEmail').value,
-    phone: document.getElementById('contactPhone').value
-  };
-
-  try {
-    const response = await fetch(`${API_URL}/contacts`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(contactData)
-    });
-
-    if (response.ok) {
-      alert('Contact added successfully!');
-      closeModal('contactModal');
-      document.getElementById('contactForm').reset();
-      loadContacts();
-    } else {
-      const data = await response.json();
-      alert(data.error || 'Failed to add contact');
-    }
-  } catch (error) {
-    alert('Connection error. Please try again.');
-  }
-});
-
-async function deleteContact(id) {
-  if (!confirm('Are you sure you want to delete this contact?')) return;
-  
-  try {
-    const response = await fetch(`${API_URL}/contacts/${id}`, { method: 'DELETE' });
-    if (response.ok) {
-      alert('Contact deleted successfully!');
-      loadContacts();
-    }
-  } catch (error) {
-    alert('Failed to delete contact');
-  }
-}
+// REMOVED: Contact creation/deletion for job seekers
 
 // ==================== PROFILE ====================
 async function loadProfile() {
@@ -574,10 +452,8 @@ async function loadStatistics() {
     const response = await fetch(`${API_URL}/applications/user/${currentUser.user_id}`);
     const applications = await response.json();
     
-    // Update stats overview
     document.getElementById('statsTotal').textContent = applications.length;
     
-    // Calculate this month's applications
     const thisMonth = new Date();
     const thisMonthApps = applications.filter(app => {
       const appDate = new Date(app.application_date);
@@ -586,12 +462,10 @@ async function loadStatistics() {
     });
     document.getElementById('statsThisMonth').textContent = thisMonthApps.length;
     
-    // Calculate success rate
     const accepted = applications.filter(app => app.status === 'Accepted').length;
     const successRate = applications.length > 0 ? ((accepted / applications.length) * 100).toFixed(1) : 0;
     document.getElementById('statsSuccessRate').textContent = successRate + '%';
     
-    // Calculate average response time (placeholder)
     document.getElementById('statsAvgTime').textContent = '5 days';
     
   } catch (error) {

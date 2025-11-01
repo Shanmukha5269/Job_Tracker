@@ -799,3 +799,14 @@ body {
     grid-template-columns: 1fr;
   }
 }
+/* Apply Button for Jobs */
+.btn-apply {
+  background: linear-gradient(135deg, var(--success-color), #059669);
+  color: white;
+}
+
+.btn-apply:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}

@@ -4,6 +4,7 @@ const applicationController = require('../controllers/applicationController');
 
 router.post('/', applicationController.createApplication);
 router.get('/user/:userId', applicationController.getApplicationsByUser);
+router.get('/company/:companyId', applicationController.getApplicationsByCompany);
 router.get('/:id', applicationController.getApplicationById);
 router.put('/:id', applicationController.updateApplication);
 router.delete('/:id', applicationController.deleteApplication);
