@@ -80,6 +80,14 @@ exports.updateContact = async (req, res) => {
   try {
     const { contact_name, job_title, email, phone } = req.body;
     
+    // Check if contact exists
+    const [existing] = await db.query('SELECT * FROM Contacts WHERE contact_id = ?', [req.params.id]);
+    
+    if (existing.length === 0) {
+      return res.status(404).json({ error: 'Contact not found' });
+    }
+
+    // Update contact
     await db.query(
       'UPDATE Contacts SET contact_name = ?, job_title = ?, email = ?, phone = ? WHERE contact_id = ?',
       [contact_name, job_title, email, phone, req.params.id]
@@ -91,6 +99,7 @@ exports.updateContact = async (req, res) => {
     res.status(500).json({ error: 'Failed to update contact', details: error.message });
   }
 };
+
 
 exports.deleteContact = async (req, res) => {
   try {

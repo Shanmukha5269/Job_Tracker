@@ -611,10 +611,60 @@ async function deleteContact(id) {
   }
 }
 
-function editContact(id) {
-  alert('Edit contact functionality coming soon!');
-  // You can implement edit functionality similar to add
+function editContact(contactId) {
+  // Find the contact in allContacts array
+  const contact = allContacts.find(c => c.contact_id === contactId);
+  
+  if (!contact) {
+    alert('Contact not found');
+    return;
+  }
+
+  // Populate the edit form with existing data
+  document.getElementById('editContactId').value = contact.contact_id;
+  document.getElementById('editContactName').value = contact.contact_name;
+  document.getElementById('editContactJobTitle').value = contact.job_title || '';
+  document.getElementById('editContactEmail').value = contact.email;
+  document.getElementById('editContactPhone').value = contact.phone || '';
+
+  // Show the edit modal
+  document.getElementById('editContactModal').classList.add('active');
 }
+
+// Handle Edit Contact Form Submission
+document.getElementById('editContactForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const contactId = document.getElementById('editContactId').value;
+  const contactData = {
+    contact_name: document.getElementById('editContactName').value,
+    job_title: document.getElementById('editContactJobTitle').value,
+    email: document.getElementById('editContactEmail').value,
+    phone: document.getElementById('editContactPhone').value
+  };
+
+  try {
+    const response = await fetch(`${API_URL}/contacts/${contactId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(contactData)
+    });
+
+    if (response.ok) {
+      alert('Contact updated successfully!');
+      closeModal('editContactModal');
+      document.getElementById('editContactForm').reset();
+      loadContacts(); // Reload contacts list
+    } else {
+      const data = await response.json();
+      alert(data.error || 'Failed to update contact');
+    }
+  } catch (error) {
+    console.error('Error updating contact:', error);
+    alert('Connection error. Please try again.');
+  }
+});
+
 
 window.onclick = function(event) {
   if (event.target.classList.contains('modal')) {
