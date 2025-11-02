@@ -615,19 +615,71 @@ async function loadContacts() {
 
 function displayContacts(contacts) {
   const listEl = document.getElementById('contactsList');
-  listEl.innerHTML = contacts.length === 0 
-    ? '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">No contacts available yet.</p>'
-    : contacts.map(contact => `
-      <div class="data-card">
-        <h3>${contact.contact_name}</h3>
-        <p><strong>Company:</strong> ${contact.company_name}</p>
-        <p><strong>Title:</strong> ${contact.job_title || 'Not specified'}</p>
-        ${contact.email ? `<p><strong>Email:</strong> <a href="mailto:${contact.email}" style="color: var(--primary-color);">${contact.email}</a></p>` : ''}
-        ${contact.phone ? `<p><strong>Phone:</strong> <a href="tel:${contact.phone}" style="color: var(--primary-color);">${contact.phone}</a></p>` : ''}
+  
+  if (contacts.length === 0) {
+    listEl.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-address-book"></i>
+        <h3>No contacts available yet</h3>
+        <p>Company contacts will appear here when employers add them</p>
       </div>
-    `).join('');
-  // REMOVED: Delete button - job seekers can only view contacts
+    `;
+    return;
+  }
+
+  listEl.innerHTML = contacts.map(contact => {
+    const contactInitials = contact.contact_name.split(' ').map(n => n[0]).join('').toUpperCase();
+    
+    return `
+      <div class="company-card">
+        <div class="company-card-banner tech"></div>
+        <div class="company-logo-wrapper">
+          <div class="company-logo">${contactInitials}</div>
+        </div>
+        <div class="company-card-body">
+          <div class="company-card-header">
+            <h3 class="company-card-name">${contact.contact_name}</h3>
+            <span class="company-card-industry">${contact.job_title}</span>
+          </div>
+
+          <div class="company-card-meta">
+            <div class="company-meta-item">
+              <i class="fas fa-building"></i>
+              <span>${contact.company_name}</span>
+            </div>
+          </div>
+
+          <div class="company-card-meta" style="margin-top: 12px;">
+            <div class="company-meta-item">
+              <i class="fas fa-envelope"></i>
+              <a href="mailto:${contact.email}" style="color: #1a73e8; text-decoration: none;">${contact.email}</a>
+            </div>
+            ${contact.phone ? `
+              <div class="company-meta-item">
+                <i class="fas fa-phone"></i>
+                <a href="tel:${contact.phone}" style="color: #1a73e8; text-decoration: none;">${contact.phone}</a>
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="company-card-footer" style="margin-top: 20px;">
+            <a href="mailto:${contact.email}" class="btn-view-company">
+              <i class="fas fa-envelope"></i>
+              Send Email
+            </a>
+            ${contact.phone ? `
+              <a href="tel:${contact.phone}" class="btn-company-website">
+                <i class="fas fa-phone"></i>
+                Call
+              </a>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
+
 
 function searchContacts() {
   const query = document.getElementById('searchContacts').value.toLowerCase();

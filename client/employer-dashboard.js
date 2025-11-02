@@ -3,6 +3,7 @@ let currentUser = null;
 let currentCompany = null;
 let allApplications = [];
 let allJobs = [];
+let allContacts = [];
 
 window.addEventListener('DOMContentLoaded', () => {
   const userData = localStorage.getItem('user');
@@ -36,6 +37,7 @@ function initializeDashboard() {
   
   loadJobs();
   loadApplications();
+  loadContacts();
   loadCompanyProfile();
 }
 
@@ -52,6 +54,7 @@ function showSection(sectionName) {
 
   if (sectionName === 'applications') loadApplications();
   else if (sectionName === 'jobs') loadJobs();
+  else if (sectionName === 'contacts') loadContacts();
 }
 
 function toggleUserDropdown() {
@@ -70,6 +73,10 @@ function showAddJobModal() {
 
 function closeModal(modalId) {
   document.getElementById(modalId).classList.remove('active');
+}
+
+function showAddContactModal() {
+  document.getElementById('contactModal').classList.add('active');
 }
 
 // ==================== JOBS ====================
@@ -459,6 +466,154 @@ function formatDate(dateString) {
   if (diffDays < 7) return `${diffDays} days ago`;
   if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
   return date.toLocaleDateString();
+}
+
+// ==================== CONTACTS MANAGEMENT ====================
+async function loadContacts() {
+  try {
+    const response = await fetch(`${API_URL}/contacts/company/${currentCompany.company_id}`);
+    allContacts = await response.json();
+    displayContacts(allContacts);
+  } catch (error) {
+    console.error('Error loading contacts:', error);
+    document.getElementById('contactsList').innerHTML = 
+      '<p style="text-align: center; color: red;">Error loading contacts</p>';
+  }
+}
+
+function displayContacts(contacts) {
+  const listEl = document.getElementById('contactsList');
+  
+  if (contacts.length === 0) {
+    listEl.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-address-book"></i>
+        <h3>No contacts added yet</h3>
+        <p>Add HR personnel and recruiters that job seekers can reach out to</p>
+        <button class="btn-apply-modern" onclick="showAddContactModal()">
+          <i class="fas fa-plus"></i>
+          Add First Contact
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  listEl.innerHTML = contacts.map(contact => {
+    const contactInitials = contact.contact_name.split(' ').map(n => n[0]).join('').toUpperCase();
+    
+    return `
+      <div class="company-card">
+        <div class="company-card-banner tech"></div>
+        <div class="company-logo-wrapper">
+          <div class="company-logo">${contactInitials}</div>
+        </div>
+        <div class="company-card-body">
+          <div class="company-card-header">
+            <h3 class="company-card-name">${contact.contact_name}</h3>
+            <span class="company-card-industry">${contact.job_title}</span>
+          </div>
+
+          <div class="company-card-meta">
+            <div class="company-meta-item">
+              <i class="fas fa-envelope"></i>
+              <a href="mailto:${contact.email}" style="color: #1a73e8; text-decoration: none;">${contact.email}</a>
+            </div>
+            ${contact.phone ? `
+              <div class="company-meta-item">
+                <i class="fas fa-phone"></i>
+                <a href="tel:${contact.phone}" style="color: #1a73e8; text-decoration: none;">${contact.phone}</a>
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="company-card-stats">
+            <div class="company-stat">
+              <span class="company-stat-number">${currentCompany.company_name}</span>
+              <span class="company-stat-label">Company</span>
+            </div>
+          </div>
+
+          <div class="company-card-footer">
+            <button class="btn-view-company" onclick="editContact(${contact.contact_id})">
+              <i class="fas fa-edit"></i>
+              Edit
+            </button>
+            <button class="btn-company-website" onclick="deleteContact(${contact.contact_id})" style="background: #c5221f;">
+              <i class="fas fa-trash"></i>
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function searchContacts() {
+  const query = document.getElementById('searchContacts').value.toLowerCase();
+  const filtered = allContacts.filter(contact => 
+    contact.contact_name.toLowerCase().includes(query) ||
+    contact.job_title.toLowerCase().includes(query) ||
+    contact.email.toLowerCase().includes(query)
+  );
+  displayContacts(filtered);
+}
+
+// Add Contact
+document.getElementById('contactForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const contactData = {
+    company_id: currentCompany.company_id,
+    contact_name: document.getElementById('contactName').value,
+    job_title: document.getElementById('contactJobTitle').value,
+    email: document.getElementById('contactEmail').value,
+    phone: document.getElementById('contactPhone').value
+  };
+
+  try {
+    const response = await fetch(`${API_URL}/contacts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(contactData)
+    });
+
+    if (response.ok) {
+      alert('Contact added successfully!');
+      closeModal('contactModal');
+      document.getElementById('contactForm').reset();
+      loadContacts();
+    } else {
+      const data = await response.json();
+      alert(data.error || 'Failed to add contact');
+    }
+  } catch (error) {
+    console.error('Error adding contact:', error);
+    alert('Connection error. Please try again.');
+  }
+});
+
+async function deleteContact(id) {
+  if (!confirm('Are you sure you want to delete this contact?')) return;
+  
+  try {
+    const response = await fetch(`${API_URL}/contacts/${id}`, { method: 'DELETE' });
+    if (response.ok) {
+      alert('Contact deleted successfully!');
+      loadContacts();
+    } else {
+      alert('Failed to delete contact');
+    }
+  } catch (error) {
+    console.error('Error deleting contact:', error);
+    alert('Failed to delete contact');
+  }
+}
+
+function editContact(id) {
+  alert('Edit contact functionality coming soon!');
+  // You can implement edit functionality similar to add
 }
 
 window.onclick = function(event) {
