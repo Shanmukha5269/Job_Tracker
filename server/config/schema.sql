@@ -6,6 +6,10 @@ USE job_tracker_db;
 CREATE TABLE IF NOT EXISTS Users (
   user_id INT PRIMARY KEY AUTO_INCREMENT,
   email VARCHAR(255) UNIQUE NOT NULL,
+  professional_summary TEXT,
+  portfolio_link VARCHAR(255),
+  linkedin_url VARCHAR(255),
+  github_url VARCHAR(255),
   password VARCHAR(255) NOT NULL,
   full_name VARCHAR(255) NOT NULL,
   phone VARCHAR(20),
@@ -92,7 +96,6 @@ CREATE TABLE IF NOT EXISTS Contacts (
   INDEX idx_company_id (company_id)
 );
 
-
 -- Application_Contacts Junction Table (M:N Relationship)
 CREATE TABLE IF NOT EXISTS Application_Contacts (
   application_id INT NOT NULL,
@@ -102,4 +105,61 @@ CREATE TABLE IF NOT EXISTS Application_Contacts (
   PRIMARY KEY (application_id, contact_id),
   FOREIGN KEY (application_id) REFERENCES Applications(application_id) ON DELETE CASCADE,
   FOREIGN KEY (contact_id) REFERENCES Contacts(contact_id) ON DELETE CASCADE
+);
+
+-- Job Seeker Education Table 
+CREATE TABLE IF NOT EXISTS job_seeker_education (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  school_name VARCHAR(255) NOT NULL,
+  school_location VARCHAR(255),
+  degree VARCHAR(100) NOT NULL,
+  field_of_study VARCHAR(150),
+  start_date DATE NOT NULL,
+  end_date DATE,
+  currently_studying BOOLEAN DEFAULT FALSE,
+  gpa DECIMAL(4, 2), 
+  honors_awards TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
+  INDEX idx_user_education (user_id)
+);
+
+-- Job Seeker Skills Table
+CREATE TABLE IF NOT EXISTS job_seeker_skills (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  skill_name VARCHAR(100) NOT NULL,
+  proficiency_level ENUM('Beginner', 'Intermediate', 'Advanced', 'Expert') NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
+  UNIQUE KEY unique_user_skill (user_id, skill_name),
+  INDEX idx_user_skills (user_id)
+);
+
+-- Job Seeker Certifications Table 
+CREATE TABLE IF NOT EXISTS job_seeker_certifications (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  certification_name VARCHAR(255) NOT NULL,
+  issuing_authority VARCHAR(255),
+  issue_date DATE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
+  INDEX idx_user_certifications (user_id)
+);
+
+-- Job Seeker Languages Table
+CREATE TABLE IF NOT EXISTS job_seeker_languages (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  language_name VARCHAR(100) NOT NULL,
+  proficiency_level ENUM('Basic', 'Conversational', 'Fluent', 'Native') NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
+  UNIQUE KEY unique_user_language (user_id, language_name),
+  INDEX idx_user_languages (user_id)
 );

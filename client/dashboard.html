@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Job Tracker - Dashboard</title>
-  <link rel="stylesheet" href="dashboard-styles.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Seeker Dashboard - Job Tracker</title>
+    <link rel="stylesheet" href="dashboard-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-  <!-- Top Navigation Bar -->
+     <!-- Top Navigation Bar -->
   <nav class="top-navbar">
     <div class="nav-left">
       <div class="logo">
@@ -33,9 +33,7 @@
       </div>
     </div>
   </nav>
-
-  <div class="dashboard-wrapper">
-    <!-- Fixed Sidebar -->
+    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-content">
         <div class="user-profile-sidebar">
@@ -84,88 +82,128 @@
       </div>
     </aside>
 
-    <!-- Main Content Area -->
+    <!-- Main Content -->
     <main class="main-content">
-      <!-- Profile Section -->
-      <section id="profileSection" class="content-section active">
-        <div class="section-header">
-          <h1>My Profile</h1>
-        </div>
-        
-        <div class="profile-cards">
-          <div class="profile-card">
-            <h3>Personal Information</h3>
-            <form id="profileForm" class="profile-form">
-              <div class="form-grid">
-                <div class="form-group">
-                  <label>Full Name</label>
-                  <input type="text" id="profileFullName" required>
-                </div>
-                <div class="form-group">
-                  <label>Email</label>
-                  <input type="email" id="profileEmail" disabled>
-                </div>
-                <div class="form-group">
-                  <label>Phone</label>
-                  <input type="tel" id="profilePhone">
-                </div>
-                <div class="form-group">
-                  <label>Location</label>
-                  <input type="text" id="profileLocation">
-                </div>
-                <div class="form-group">
-                  <label>Gender</label>
-                  <select id="profileSex">
-                    <option value="">Select</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-              </div>
-              <button type="submit" class="btn-primary">
-                <i class="fas fa-save"></i> Update Profile
-              </button>
-            </form>
-          </div>
-
-          <div class="profile-stats-card">
-            <h3>Your Statistics</h3>
-            <div class="stats-grid">
-              <div class="stat-box">
-                <i class="fas fa-clipboard-list"></i>
-                <div>
-                  <h4 id="totalApplications">0</h4>
-                  <p>Total Applications</p>
-                </div>
-              </div>
-              <div class="stat-box">
-                <i class="fas fa-hourglass-half"></i>
-                <div>
-                  <h4 id="pendingApplications">0</h4>
-                  <p>In Review</p>
-                </div>
-              </div>
-              <div class="stat-box">
-                <i class="fas fa-calendar-check"></i>
-                <div>
-                  <h4 id="interviewScheduled">0</h4>
-                  <p>Interviews</p>
-                </div>
-              </div>
-              <div class="stat-box">
-                <i class="fas fa-check-circle"></i>
-                <div>
-                  <h4 id="acceptedOffers">0</h4>
-                  <p>Offers</p>
-                </div>
-              </div>
+        <!-- Profile Section -->
+        <section id="profileSection" class="content-section active">
+            <div class="section-header">
+                <h1><i class="fas fa-user"></i> My Profile</h1>
             </div>
-          </div>
-        </div>
-      </section>
 
-      <!-- Jobs Section -->
+            <!-- Profile Form -->
+            <div class="profile-card">
+                <h3>Personal Information</h3>
+                <form id="profileForm" onsubmit="updateProfile(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="profileFullName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="profileEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input type="tel" id="profilePhone">
+                        </div>
+                        <div class="form-group">
+                            <label>Location</label>
+                            <input type="text" id="profileLocation">
+                        </div>
+                        <div class="form-group">
+                            <label>Sex</label>
+                            <select id="profileSex">
+                                <option value="">Select</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">Update Profile</button>
+                </form>
+            </div>
+
+            <!-- Education Section -->
+            <div class="profile-card">
+                <div class="section-header">
+                    <h3><i class="fas fa-graduation-cap"></i> Education</h3>
+                    <button class="btn-primary" onclick="showEducationModal()">
+                        <i class="fas fa-plus"></i> Add Education
+                    </button>
+                </div>
+                <div id="educationList" class="profile-items-list"></div>
+            </div>
+
+            <!-- Skills Section -->
+            <div class="profile-card">
+                <div class="section-header">
+                    <h3><i class="fas fa-code"></i> Skills</h3>
+                    <button class="btn-primary" onclick="showSkillsModal()">
+                        <i class="fas fa-plus"></i> Add Skill
+                    </button>
+                </div>
+                <div id="skillsList" class="skills-container"></div>
+            </div>
+
+            <!-- Certifications Section -->
+            <div class="profile-card">
+                <div class="section-header">
+                    <h3><i class="fas fa-certificate"></i> Certifications & Licenses</h3>
+                    <button class="btn-primary" onclick="showCertificationModal()">
+                        <i class="fas fa-plus"></i> Add Certification
+                    </button>
+                </div>
+                <div id="certificationsList" class="profile-items-list"></div>
+            </div>
+
+            <!-- Languages Section -->
+            <div class="profile-card">
+                <div class="section-header">
+                    <h3><i class="fas fa-language"></i> Languages</h3>
+                    <button class="btn-primary" onclick="showLanguageModal()">
+                        <i class="fas fa-plus"></i> Add Language
+                    </button>
+                </div>
+                <div id="languagesList" class="skills-container"></div>
+            </div>
+
+            <!-- Profile Statistics -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <i class="fas fa-file-alt stat-icon"></i>
+                    <div>
+                        <h4 id="profileTotalApps">0</h4>
+                        <p>Total Applications</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-clock stat-icon"></i>
+                    <div>
+                        <h4 id="profileInReview">0</h4>
+                        <p>In Review</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-comments stat-icon"></i>
+                    <div>
+                        <h4 id="profileInterviews">0</h4>
+                        <p>Interviews</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-check-circle stat-icon"></i>
+                    <div>
+                        <h4 id="profileOffers">0</h4>
+                        <p>Offers</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        
+<!-- Jobs Section -->
 <section id="jobsSection" class="content-section">
   <div class="section-header">
     <h1>Available Jobs</h1>
@@ -186,8 +224,9 @@
   <div id="jobsList"></div>
 </section>
 
-<!-- Applications Section -->
-<section id="applicationsSection" class="content-section">
+
+        <!-- Applications Section -->
+        <section id="applicationsSection" class="content-section">
   <div class="section-header">
     <h1>My Applications</h1>
     <button class="btn-apply-modern" onclick="showSection('jobs')">
@@ -211,266 +250,374 @@
   <div id="applicationsList"></div>
 </section>
 
-
-      <!-- Companies Section -->
-      <section id="companiesSection" class="content-section">
-        <div class="section-header">
-          <h1>Companies</h1>
-        </div>
-  
-        <div class="filters-bar-modern">
-          <input type="text" id="searchCompanies" class="search-input-modern" placeholder="Search companies by name, industry, or location..." onkeyup="searchCompanies()">
-        </div>
-
-        <div id="companiesList" class="companies-grid"></div>
-      </section>
-
-      <!-- Contacts Section -->
-      <section id="contactsSection" class="content-section">
-        <div class="section-header">
-          <h1>Professional Contacts</h1>
-        </div>
-        
-        <div class="filters-bar">
-          <input type="text" id="searchContacts" placeholder="Search contacts..." onkeyup="searchContacts()">
-        </div>
-
-        <div id="contactsList" class="cards-grid"></div>
-      </section>
-
-      <!-- Statistics Section -->
-      <section id="statisticsSection" class="content-section">
-        <div class="section-header">
-          <h1>Statistics & Insights</h1>
-        </div>
-        
-        <div class="stats-overview">
-          <div class="stat-card blue">
-            <i class="fas fa-paper-plane"></i>
-            <div>
-              <h2 id="statsTotal">0</h2>
-              <p>Total Applications</p>
+        <!-- Companies Section -->
+        <section id="companiesSection" class="content-section">
+            <div class="section-header">
+                <h1><i class="fas fa-building"></i> Companies</h1>
+                <button class="btn-primary" onclick="showAddCompanyModal()">
+                    <i class="fas fa-plus"></i> Add Company
+                </button>
             </div>
-          </div>
-          <div class="stat-card green">
-            <i class="fas fa-calendar-alt"></i>
-            <div>
-              <h2 id="statsThisMonth">0</h2>
-              <p>This Month</p>
-            </div>
-          </div>
-          <div class="stat-card orange">
-            <i class="fas fa-percentage"></i>
-            <div>
-              <h2 id="statsSuccessRate">0%</h2>
-              <p>Success Rate</p>
-            </div>
-          </div>
-          <div class="stat-card purple">
-            <i class="fas fa-clock"></i>
-            <div>
-              <h2 id="statsAvgTime">-- days</h2>
-              <p>Avg Response Time</p>
-            </div>
-          </div>
-        </div>
+            <div id="companiesList" class="data-grid"></div>
+        </section>
 
-        <div class="charts-container">
-          <div class="chart-card">
-            <h3>Applications by Status</h3>
-            <canvas id="statusChart"></canvas>
-          </div>
-          <div class="chart-card">
-            <h3>Application Timeline</h3>
-            <canvas id="timelineChart"></canvas>
-          </div>
-        </div>
-      </section>
+        <!-- Contacts Section -->
+        <section id="contactsSection" class="content-section">
+            <div class="section-header">
+                <h1><i class="fas fa-address-book"></i> Professional Contacts</h1>
+            </div>
+            <div id="contactsList" class="data-grid"></div>
+        </section>
+
+        <!-- Statistics Section -->
+        <section id="statisticsSection" class="content-section">
+            <div class="section-header">
+                <h1><i class="fas fa-chart-bar"></i> Statistics & Insights</h1>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <i class="fas fa-file-alt stat-icon"></i>
+                    <h2 id="statTotalApps">0</h2>
+                    <p>Total Applications</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-calendar-alt stat-icon"></i>
+                    <h2 id="statThisMonth">0</h2>
+                    <p>This Month</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-percentage stat-icon"></i>
+                    <h2 id="statSuccessRate">0%</h2>
+                    <p>Success Rate</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-clock stat-icon"></i>
+                    <h2 id="statAvgResponse">-- days</h2>
+                    <p>Avg Response Time</p>
+                </div>
+            </div>
+
+            <div class="profile-card">
+                <h3>Application Status Breakdown</h3>
+                <div id="statusBreakdown"></div>
+            </div>
+        </section>
     </main>
-  </div>
 
-  <!-- Modals -->
-  <div id="applicationModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Add New Application</h2>
-        <button class="close-modal" onclick="closeModal('applicationModal')">&times;</button>
-      </div>
-      <form id="applicationForm">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Job *</label>
-            <select id="appJobId" required></select>
-          </div>
-          <div class="form-group">
-            <label>Application Date *</label>
-            <input type="date" id="appDate" required>
-          </div>
-          <div class="form-group">
-            <label>Status</label>
-            <select id="appStatus">
-              <option value="Applied">Applied</option>
-              <option value="In Review">In Review</option>
-              <option value="Interview Scheduled">Interview Scheduled</option>
-              <option value="Rejected">Rejected</option>
-              <option value="Accepted">Accepted</option>
-              <option value="Withdrawn">Withdrawn</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Resume Link</label>
-            <input type="text" id="appResume">
-          </div>
+    <!-- Application Modal -->
+    <div id="applicationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Application</h2>
+                <button class="close-modal" onclick="closeModal('applicationModal')">&times;</button>
+            </div>
+            <form id="applicationForm" onsubmit="saveApplication(event)">
+                <div class="form-group">
+                    <label>Job *</label>
+                    <select id="applicationJobId" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Application Date *</label>
+                    <input type="date" id="applicationDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Status *</label>
+                    <select id="applicationStatus" required>
+                        <option value="Applied">Applied</option>
+                        <option value="In Review">In Review</option>
+                        <option value="Interview">Interview</option>
+                        <option value="Offer">Offer</option>
+                        <option value="Rejected">Rejected</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="applicationNotes" rows="4"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('applicationModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
         </div>
-        <div class="form-group">
-          <label>Cover Letter</label>
-          <textarea id="appCoverLetter" rows="4"></textarea>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn-secondary" onclick="closeModal('applicationModal')">Cancel</button>
-          <button type="submit" class="btn-primary">Submit</button>
-        </div>
-      </form>
     </div>
-  </div>
 
-  <div id="jobModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Add New Job</h2>
-        <button class="close-modal" onclick="closeModal('jobModal')">&times;</button>
-      </div>
-      <form id="jobForm">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Company *</label>
-            <select id="jobCompanyId" required></select>
-          </div>
-          <div class="form-group">
-            <label>Job Title *</label>
-            <input type="text" id="jobTitle" required>
-          </div>
-          <div class="form-group">
-            <label>Location</label>
-            <input type="text" id="jobLocation">
-          </div>
-          <div class="form-group">
-            <label>Employment Type *</label>
-            <select id="jobEmploymentType" required>
-              <option value="Full-time">Full-time</option>
-              <option value="Part-time">Part-time</option>
-              <option value="Contract">Contract</option>
-              <option value="Internship">Internship</option>
-              <option value="Remote">Remote</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Salary Range</label>
-            <input type="text" id="jobSalary" placeholder="e.g., $80k - $100k">
-          </div>
-          <div class="form-group">
-            <label>Posted Date</label>
-            <input type="date" id="jobPostedDate">
-          </div>
-          <div class="form-group">
-            <label>Application Deadline</label>
-            <input type="date" id="jobDeadline">
-          </div>
-          <div class="form-group">
-            <label>Job URL</label>
-            <input type="url" id="jobUrl">
-          </div>
+    <!-- Job Modal -->
+    <div id="jobModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Job</h2>
+                <button class="close-modal" onclick="closeModal('jobModal')">&times;</button>
+            </div>
+            <form id="jobForm" onsubmit="saveJob(event)">
+                <div class="form-group">
+                    <label>Job Title *</label>
+                    <input type="text" id="jobTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>Company *</label>
+                    <select id="jobCompanyId" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" id="jobLocation">
+                </div>
+                <div class="form-group">
+                    <label>Job Type</label>
+                    <select id="jobType">
+                        <option value="Full-time">Full-time</option>
+                        <option value="Part-time">Part-time</option>
+                        <option value="Contract">Contract</option>
+                        <option value="Internship">Internship</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Salary Range</label>
+                    <input type="text" id="jobSalary" placeholder="e.g., $60k - $80k">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="jobDescription" rows="4"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('jobModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
         </div>
-        <div class="form-group">
-          <label>Job Description</label>
-          <textarea id="jobDescription" rows="4"></textarea>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn-secondary" onclick="closeModal('jobModal')">Cancel</button>
-          <button type="submit" class="btn-primary">Submit</button>
-        </div>
-      </form>
     </div>
-  </div>
 
-  <div id="companyModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Add New Company</h2>
-        <button class="close-modal" onclick="closeModal('companyModal')">&times;</button>
-      </div>
-      <form id="companyForm">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Company Name *</label>
-            <input type="text" id="companyName" required>
-          </div>
-          <div class="form-group">
-            <label>Industry</label>
-            <input type="text" id="companyIndustry">
-          </div>
-          <div class="form-group">
-            <label>Location</label>
-            <input type="text" id="companyLocation">
-          </div>
-          <div class="form-group">
-            <label>Website</label>
-            <input type="url" id="companyWebsite">
-          </div>
-          <div class="form-group">
-            <label>Number of Employees</label>
-            <input type="number" id="companyEmployees">
-          </div>
+    <!-- Company Modal -->
+    <div id="companyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Company</h2>
+                <button class="close-modal" onclick="closeModal('companyModal')">&times;</button>
+            </div>
+            <form id="companyForm" onsubmit="saveCompany(event)">
+                <div class="form-group">
+                    <label>Company Name *</label>
+                    <input type="text" id="companyName" required>
+                </div>
+                <div class="form-group">
+                    <label>Industry</label>
+                    <input type="text" id="companyIndustry">
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" id="companyLocation">
+                </div>
+                <div class="form-group">
+                    <label>Website</label>
+                    <input type="url" id="companyWebsite">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="companyDescription" rows="4"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('companyModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
         </div>
-        <div class="form-group">
-          <label>Description</label>
-          <textarea id="companyDescription" rows="3"></textarea>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn-secondary" onclick="closeModal('companyModal')">Cancel</button>
-          <button type="submit" class="btn-primary">Submit</button>
-        </div>
-      </form>
     </div>
-  </div>
 
-  <div id="contactModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Add New Contact</h2>
-        <button class="close-modal" onclick="closeModal('contactModal')">&times;</button>
-      </div>
-      <form id="contactForm">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Company *</label>
-            <select id="contactCompanyId" required></select>
-          </div>
-          <div class="form-group">
-            <label>Contact Name *</label>
-            <input type="text" id="contactName" required>
-          </div>
-          <div class="form-group">
-            <label>Job Title</label>
-            <input type="text" id="contactJobTitle">
-          </div>
-          <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="contactEmail">
-          </div>
-          <div class="form-group">
-            <label>Phone</label>
-            <input type="tel" id="contactPhone">
-          </div>
+    <!-- Contact Modal -->
+    <div id="contactModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Contact</h2>
+                <button class="close-modal" onclick="closeModal('contactModal')">&times;</button>
+            </div>
+            <form id="contactForm" onsubmit="saveContact(event)">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="contactName" required>
+                </div>
+                <div class="form-group">
+                    <label>Job Title</label>
+                    <input type="text" id="contactJobTitle">
+                </div>
+                <div class="form-group">
+                    <label>Company</label>
+                    <select id="contactCompanyId"></select>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="contactEmail">
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" id="contactPhone">
+                </div>
+                <div class="form-group">
+                    <label>LinkedIn</label>
+                    <input type="url" id="contactLinkedin">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="contactNotes" rows="3"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('contactModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
         </div>
-        <div class="modal-actions">
-          <button type="button" class="btn-secondary" onclick="closeModal('contactModal')">Cancel</button>
-          <button type="submit" class="btn-primary">Submit</button>
-        </div>
-      </form>
     </div>
-  </div>
 
-  <script src="dashboard.js"></script>
+
+    </main>
+
+    <!-- Education Modal -->
+    <div id="educationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Education</h2>
+                <button class="close-modal" onclick="closeModal('educationModal')">&times;</button>
+            </div>
+            <form id="educationForm" onsubmit="saveEducation(event)">
+                <input type="hidden" id="education-id">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>School/University Name *</label>
+                        <input type="text" id="school-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>School Location</label>
+                        <input type="text" id="school-location">
+                    </div>
+                    <div class="form-group">
+                        <label>Degree *</label>
+                        <input type="text" id="degree" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Field of Study</label>
+                        <input type="text" id="field-of-study">
+                    </div>
+                    <div class="form-group">
+                        <label>Start Date *</label>
+                        <input type="date" id="edu-start-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>End Date</label>
+                        <input type="date" id="edu-end-date">
+                    </div>
+                    <div class="form-group">
+                        <label>GPA (out of 10)</label>
+                        <input type="number" step="0.01" min="0" max="10" id="gpa" placeholder="e.g., 8.5">
+                    </div>
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="currently-studying" style="width: auto;">
+                            Currently Studying
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Honors & Awards</label>
+                    <textarea id="honors-awards" rows="3"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('educationModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Skills Modal -->
+    <div id="skillsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Skill</h2>
+                <button class="close-modal" onclick="closeModal('skillsModal')">&times;</button>
+            </div>
+            <form id="skillsForm" onsubmit="saveSkill(event)">
+                <div class="form-group">
+                    <label>Skill Name *</label>
+                    <input type="text" id="skill-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Proficiency Level *</label>
+                    <select id="proficiency-level" required>
+                        <option value="">Select Level</option>
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
+                        <option value="Expert">Expert</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('skillsModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Certification Modal (UPDATED - No certificate_number and expiry_date) -->
+    <div id="certificationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Certification</h2>
+                <button class="close-modal" onclick="closeModal('certificationModal')">&times;</button>
+            </div>
+            <form id="certificationForm" onsubmit="saveCertification(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Certification Name *</label>
+                        <input type="text" id="cert-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Issuing Authority</label>
+                        <input type="text" id="issuing-authority">
+                    </div>
+                    <div class="form-group">
+                        <label>Issue Date</label>
+                        <input type="date" id="issue-date">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('certificationModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Language Modal -->
+    <div id="languageModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Language</h2>
+                <button class="close-modal" onclick="closeModal('languageModal')">&times;</button>
+            </div>
+            <form id="languageForm" onsubmit="saveLanguage(event)">
+                <div class="form-group">
+                    <label>Language *</label>
+                    <input type="text" id="language-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Proficiency Level *</label>
+                    <select id="lang-proficiency" required>
+                        <option value="">Select Level</option>
+                        <option value="Basic">Basic</option>
+                        <option value="Conversational">Conversational</option>
+                        <option value="Fluent">Fluent</option>
+                        <option value="Native">Native</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('languageModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
 </body>
 </html>

@@ -13,6 +13,7 @@ const companyRoutes = require('./routes/companyRoutes');
 const jobRoutes = require('./routes/jobRoutes');
 const applicationRoutes = require('./routes/applicationRoutes');
 const contactRoutes = require('./routes/contactRoutes');
+const profileRoutes = require('./routes/profileRoutes'); 
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use('/api/companies', companyRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/contacts', contactRoutes);
+app.use('/api/profile', profileRoutes); 
 
 // Root route - serve home page
 app.get('/', (req, res) => {

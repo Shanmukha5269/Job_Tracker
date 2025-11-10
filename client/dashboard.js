@@ -103,6 +103,453 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// ==================== PROFILE ====================
+async function loadProfile() {
+    try {
+        const response = await fetch(`${API_URL}/users/${currentUser.user_id}`);
+        const userData = await response.json();
+
+        document.getElementById('profileFullName').value = userData.full_name || '';
+        document.getElementById('profileEmail').value = userData.email || '';
+        document.getElementById('profilePhone').value = userData.phone || '';
+        document.getElementById('profileLocation').value = userData.location || '';
+        document.getElementById('profileSex').value = userData.sex || '';
+
+        // Load profile sections
+        loadEducation();
+        loadSkills();
+        loadCertifications();
+        loadLanguages();
+
+        // Load profile statistics
+        const statsResponse = await fetch(`${API_URL}/applications/user/${currentUser.user_id}`);
+        const applications = await statsResponse.json();
+        
+        document.getElementById('profileTotalApps').textContent = applications.length;
+        document.getElementById('profileInReview').textContent = applications.filter(a => a.status === 'In Review').length;
+        document.getElementById('profileInterviews').textContent = applications.filter(a => a.status === 'Interview').length;
+        document.getElementById('profileOffers').textContent = applications.filter(a => a.status === 'Offer').length;
+    } catch (error) {
+        console.error('Error loading profile:', error);
+    }
+}
+
+async function updateProfile(event) {
+    event.preventDefault();
+    
+    const data = {
+        full_name: document.getElementById('profileFullName').value,
+        email: document.getElementById('profileEmail').value,
+        phone: document.getElementById('profilePhone').value,
+        location: document.getElementById('profileLocation').value,
+        sex: document.getElementById('profileSex').value
+    };
+
+    try {
+        const response = await fetch(`${API_URL}/users/${currentUser.user_id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            alert('Profile updated successfully!');
+            currentUser.full_name = data.full_name;
+            localStorage.setItem('user', JSON.stringify(currentUser));
+            document.getElementById('userName').textContent = data.full_name;
+            document.getElementById('sidebarUserName').textContent = data.full_name;
+        } else {
+            alert('Failed to update profile');
+        }
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        alert('Error updating profile');
+    }
+}
+
+// ==================== PROFILE: EDUCATION, SKILLS, CERTIFICATIONS, LANGUAGES ====================
+
+// Education Functions
+function showEducationModal() {
+    document.getElementById('educationModal').classList.add('active');
+    document.getElementById('educationForm').reset();
+    document.getElementById('education-id').value = '';
+}
+
+async function loadEducation() {
+    try {
+        const response = await fetch(`${API_URL}/profile/education?user_id=${currentUser.user_id}`);
+        const education = await response.json();
+        displayEducation(education);
+    } catch (error) {
+        console.error('Error loading education:', error);
+    }
+}
+
+function displayEducation(educationList) {
+    const container = document.getElementById('educationList');
+    if (!container) return;
+    
+    if (educationList.length === 0) {
+        container.innerHTML = '<p style="color: #6b7280;">No education added yet.</p>';
+        return;
+    }
+    
+    container.innerHTML = '';
+    educationList.forEach(edu => {
+        const endDate = edu.currently_studying ? 'Present' : (edu.end_date ? new Date(edu.end_date).toLocaleDateString() : 'N/A');
+        const startDate = new Date(edu.start_date).toLocaleDateString();
+        
+        const card = document.createElement('div');
+        card.className = 'data-card';
+        card.innerHTML = `
+            <div class="card-actions" style="float: right;">
+                <button class="btn-small btn-delete" onclick="deleteEducation(${edu.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            <h3>${edu.degree}${edu.field_of_study ? ' in ' + edu.field_of_study : ''}</h3>
+            <p><strong>${edu.school_name}</strong>${edu.school_location ? ' - ' + edu.school_location : ''}</p>
+            <p style="color: #6b7280; font-size: 13px;">${startDate} - ${endDate}</p>
+            ${edu.gpa ? `<p>GPA: ${edu.gpa}/10</p>` : ''}
+            ${edu.honors_awards ? `<p style="font-style: italic;">${edu.honors_awards}</p>` : ''}
+        `;
+        container.appendChild(card);
+    });
+}
+
+async function saveEducation(event) {
+    event.preventDefault();
+    
+    const data = {
+        user_id: currentUser.user_id, 
+        school_name: document.getElementById('school-name').value,
+        school_location: document.getElementById('school-location').value,
+        degree: document.getElementById('degree').value,
+        field_of_study: document.getElementById('field-of-study').value,
+        start_date: document.getElementById('edu-start-date').value,
+        end_date: document.getElementById('edu-end-date').value,
+        currently_studying: document.getElementById('currently-studying').checked,
+        gpa: document.getElementById('gpa').value,
+        honors_awards: document.getElementById('honors-awards').value
+    };
+    
+    console.log('Sending education data:', data); // Debug log
+    
+    try {
+        const response = await fetch(`${API_URL}/profile/education`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            closeModal('educationModal');
+            loadEducation();
+            alert('Education added successfully!');
+        } else {
+            console.error('Server error:', result);
+            alert(result.error || 'Failed to add education');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error saving education');
+    }
+}
+
+async function deleteEducation(id) {
+    if (!confirm('Are you sure you want to delete this education entry?')) return;
+    
+    try {
+        const response = await fetch(`${API_URL}/profile/education/${id}?user_id=${currentUser.user_id}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            loadEducation();
+            alert('Education deleted successfully!');
+        }
+    } catch (error) {
+        console.error('Error deleting education:', error);
+    }
+}
+
+// Skills Functions
+function showSkillsModal() {
+    document.getElementById('skillsModal').classList.add('active');
+    document.getElementById('skillsForm').reset();
+}
+
+async function loadSkills() {
+    try {
+        const response = await fetch(`${API_URL}/profile/skills?user_id=${currentUser.user_id}`);
+        const skills = await response.json();
+        displaySkills(skills);
+    } catch (error) {
+        console.error('Error loading skills:', error);
+    }
+}
+
+function displaySkills(skillsList) {
+    const container = document.getElementById('skillsList');
+    if (!container) return;
+    
+    if (skillsList.length === 0) {
+        container.innerHTML = '<p style="color: #6b7280;">No skills added yet.</p>';
+        return;
+    }
+    
+    container.innerHTML = '';
+    skillsList.forEach(skill => {
+        const badge = document.createElement('span');
+        badge.className = 'skill-badge';
+        badge.innerHTML = `
+            ${skill.skill_name} - <strong>${skill.proficiency_level}</strong>
+            <button onclick="deleteSkill(${skill.id})" style="background: none; border: none; color: #ef4444; margin-left: 8px; cursor: pointer; font-size: 18px;">&times;</button>
+        `;
+        container.appendChild(badge);
+    });
+}
+
+async function saveSkill(event) {
+    event.preventDefault();
+    
+    const data = {
+        user_id: currentUser.user_id, 
+        skill_name: document.getElementById('skill-name').value,
+        proficiency_level: document.getElementById('proficiency-level').value
+    };
+    
+    console.log('Sending skill data:', data); // Debug log
+    
+    try {
+        const response = await fetch(`${API_URL}/profile/skills`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            closeModal('skillsModal');
+            loadSkills();
+            alert('Skill added successfully!');
+        } else {
+            console.error('Server error:', result);
+            alert(result.error || 'Failed to add skill');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error saving skill');
+    }
+}
+
+async function deleteSkill(id) {
+    if (!confirm('Are you sure you want to delete this skill?')) return;
+    
+    try {
+        const response = await fetch(`${API_URL}/profile/skills/${id}?user_id=${currentUser.user_id}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            loadSkills();
+            alert('Skill deleted successfully!');
+        }
+    } catch (error) {
+        console.error('Error deleting skill:', error);
+    }
+}
+
+// Certifications Functions
+function showCertificationModal() {
+    document.getElementById('certificationModal').classList.add('active');
+    document.getElementById('certificationForm').reset();
+}
+
+async function loadCertifications() {
+    try {
+        const response = await fetch(`${API_URL}/profile/certifications?user_id=${currentUser.user_id}`);
+        const certs = await response.json();
+        displayCertifications(certs);
+    } catch (error) {
+        console.error('Error loading certifications:', error);
+    }
+}
+
+function displayCertifications(certsList) {
+    const container = document.getElementById('certificationsList');
+    if (!container) return;
+    
+    if (certsList.length === 0) {
+        container.innerHTML = '<p style="color: #6b7280;">No certifications added yet.</p>';
+        return;
+    }
+    
+    container.innerHTML = '';
+    certsList.forEach(cert => {
+        const issueDate = cert.issue_date ? new Date(cert.issue_date).toLocaleDateString() : 'N/A';
+        
+        const card = document.createElement('div');
+        card.className = 'data-card';
+        card.innerHTML = `
+            <div class="card-actions" style="float: right;">
+                <button class="btn-small btn-delete" onclick="deleteCertification(${cert.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            <h3>${cert.certification_name}</h3>
+            ${cert.issuing_authority ? `<p><strong>${cert.issuing_authority}</strong></p>` : ''}
+            <p style="color: #6b7280; font-size: 13px;">Issued: ${issueDate}</p>
+        `;
+        container.appendChild(card);
+    });
+}
+
+async function saveCertification(event) {
+    event.preventDefault();
+    
+    const data = {
+        user_id: currentUser.user_id,
+        certification_name: document.getElementById('cert-name').value,
+        issuing_authority: document.getElementById('issuing-authority').value,
+        issue_date: document.getElementById('issue-date').value
+    };
+    
+    console.log('Sending certification data:', data); // Debug log
+    
+    try {
+        const response = await fetch(`${API_URL}/profile/certifications`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            closeModal('certificationModal');
+            loadCertifications();
+            alert('Certification added successfully!');
+        } else {
+            console.error('Server error:', result);
+            alert(result.error || 'Failed to add certification');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error saving certification');
+    }
+}
+
+async function deleteCertification(id) {
+    if (!confirm('Are you sure you want to delete this certification?')) return;
+    
+    try {
+        const response = await fetch(`${API_URL}/profile/certifications/${id}?user_id=${currentUser.user_id}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            loadCertifications();
+            alert('Certification deleted successfully!');
+        }
+    } catch (error) {
+        console.error('Error deleting certification:', error);
+    }
+}
+
+// Languages Functions
+function showLanguageModal() {
+    document.getElementById('languageModal').classList.add('active');
+    document.getElementById('languageForm').reset();
+}
+
+async function loadLanguages() {
+    try {
+        const response = await fetch(`${API_URL}/profile/languages?user_id=${currentUser.user_id}`);
+        const languages = await response.json();
+        displayLanguages(languages);
+    } catch (error) {
+        console.error('Error loading languages:', error);
+    }
+}
+
+function displayLanguages(languagesList) {
+    const container = document.getElementById('languagesList');
+    if (!container) return;
+    
+    if (languagesList.length === 0) {
+        container.innerHTML = '<p style="color: #6b7280;">No languages added yet.</p>';
+        return;
+    }
+    
+    container.innerHTML = '';
+    languagesList.forEach(lang => {
+        const badge = document.createElement('span');
+        badge.className = 'skill-badge';
+        badge.innerHTML = `
+            ${lang.language_name} - <strong>${lang.proficiency_level}</strong>
+            <button onclick="deleteLanguage(${lang.id})" style="background: none; border: none; color: #ef4444; margin-left: 8px; cursor: pointer; font-size: 18px;">&times;</button>
+        `;
+        container.appendChild(badge);
+    });
+}
+
+async function saveLanguage(event) {
+    event.preventDefault();
+    
+    const data = {
+        user_id: currentUser.user_id, 
+        language_name: document.getElementById('language-name').value,
+        proficiency_level: document.getElementById('lang-proficiency').value
+    };
+    
+    console.log('Sending language data:', data); // Debug log
+    
+    try {
+        const response = await fetch(`${API_URL}/profile/languages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            closeModal('languageModal');
+            loadLanguages();
+            alert('Language added successfully!');
+        } else {
+            console.error('Server error:', result);
+            alert(result.error || 'Failed to add language');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error saving language');
+    }
+}
+
+async function deleteLanguage(id) {
+    if (!confirm('Are you sure you want to delete this language?')) return;
+    
+    try {
+        const response = await fetch(`${API_URL}/profile/languages/${id}?user_id=${currentUser.user_id}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            loadLanguages();
+            alert('Language deleted successfully!');
+        }
+    } catch (error) {
+        console.error('Error deleting language:', error);
+    }
+}
+
+
 // ==================== APPLICATIONS ====================
 async function loadApplications() {
   try {
@@ -598,8 +1045,6 @@ function searchCompanies() {
   displayCompanies(filtered);
 }
 
-// REMOVED: Company creation/deletion for job seekers
-
 // ==================== CONTACTS ====================
 async function loadContacts() {
   try {
@@ -732,7 +1177,6 @@ document.getElementById('profileForm').addEventListener('submit', async (e) => {
     alert('Connection error. Please try again.');
   }
 });
-
 // ==================== STATISTICS ====================
 async function calculateStatistics() {
   try {
