@@ -7,904 +7,1036 @@ let allContacts = [];
 
 // Check authentication on page load
 window.addEventListener('DOMContentLoaded', () => {
-  const userData = localStorage.getItem('user');
-  if (!userData) {
-    window.location.href = '/login';
-    return;
-  }
-  
-  currentUser = JSON.parse(userData);
-  initializeDashboard();
+    const userData = localStorage.getItem('user');
+    
+    if (!userData) {
+        window.location.href = '/login';
+        return;
+    }
+    
+    try {
+        const parsedData = JSON.parse(userData);
+        
+        // Handle nested user object from login response
+        if (parsedData.user) {
+            currentUser = parsedData.user;
+        } else {
+            currentUser = parsedData;
+        }
+        
+        // Handle both userid and user_id
+        if (currentUser.user_id && !currentUser.userid) {
+            currentUser.userid = currentUser.user_id;
+        }
+        
+        if (!currentUser.userid) {
+            console.error('No userid found in session');
+            alert('Session expired. Please log in again.');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+            return;
+        }
+        
+        console.log('=== USER SESSION LOADED ===');
+        console.log('User ID:', currentUser.userid);
+        console.log('Full Name:', currentUser.fullname);
+        console.log('Email:', currentUser.email);
+        
+        initializeDashboard();
+    } catch (error) {
+        console.error('Error parsing user data:', error);
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+    }
 });
 
 function initializeDashboard() {
-  // Set user info in sidebar and navbar
-  const initials = currentUser.full_name.split(' ').map(n => n[0]).join('').toUpperCase();
-  document.getElementById('userInitial').textContent = initials;
-  document.getElementById('sidebarUserInitial').textContent = initials;
-  document.getElementById('userName').textContent = currentUser.full_name;
-  document.getElementById('sidebarUserName').textContent = currentUser.full_name;
-  document.getElementById('userEmail').textContent = currentUser.email;
-  
-  // Load initial data
-  loadProfile();
-  loadApplications();
-  loadJobs();
-  loadCompanies();
-  loadContacts();
-  calculateStatistics();
+    setUserUI();
+    loadInitialData();
+}
+
+function setUserUI() {
+    const userName = currentUser.full_name || 'User';
+    const userEmail = currentUser.email || '';
+    
+    const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase();
+    
+    console.log('Setting UI - Name:', userName, 'Email:', userEmail, 'Initials:', initials);
+    
+    // Update all user display elements
+    const elements = {
+        userInitial: document.getElementById('userInitial'),
+        userName: document.getElementById('userName'),
+        sidebarUserInitial: document.getElementById('sidebarUserInitial'),
+        sidebarUserName: document.getElementById('sidebarUserName'),
+        sidebarUserEmail: document.getElementById('sidebarUserEmail')
+    };
+    
+    if (elements.userInitial) elements.userInitial.textContent = initials;
+    if (elements.userName) elements.userName.textContent = userName;
+    if (elements.sidebarUserInitial) elements.sidebarUserInitial.textContent = initials;
+    if (elements.sidebarUserName) elements.sidebarUserName.textContent = userName;
+    if (elements.sidebarUserEmail) elements.sidebarUserEmail.textContent = userEmail;
+}
+
+async function loadInitialData() {
+    try {
+        console.log('=== LOADING INITIAL DATA ===');
+        await Promise.allSettled([
+            loadProfile(),
+            loadApplications(),
+            loadJobs(),
+            loadCompanies(),
+            loadContacts()
+        ]);
+        
+        calculateStatistics();
+        console.log('=== INITIAL DATA LOAD COMPLETE ===');
+    } catch (error) {
+        console.error('Error loading initial data:', error);
+    }
 }
 
 function showSection(sectionName) {
-  document.querySelectorAll('.content-section').forEach(section => {
-    section.classList.remove('active');
-  });
-  document.querySelectorAll('.nav-item').forEach(item => {
-    item.classList.remove('active');
-  });
-
-  document.getElementById(`${sectionName}Section`).classList.add('active');
-  document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
-
-  if (sectionName === 'applications') loadApplications();
-  else if (sectionName === 'jobs') loadJobs();
-  else if (sectionName === 'companies') loadCompanies();
-  else if (sectionName === 'contacts') loadContacts();
-  else if (sectionName === 'statistics') loadStatistics();
-  else if (sectionName === 'profile') loadProfile();
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    const targetSection = document.getElementById(`${sectionName}Section`);
+    const targetNavItem = document.querySelector(`[data-section="${sectionName}"]`);
+    
+    if (targetSection) targetSection.classList.add('active');
+    if (targetNavItem) targetNavItem.classList.add('active');
 }
 
-function toggleUserDropdown() {
-  document.getElementById('userDropdown').classList.toggle('active');
-}
-
-function logout() {
-  localStorage.removeItem('user');
-  window.location.href = '/';
-}
-
-function toggleTheme() {
-  alert('Theme toggle feature coming soon!');
-}
-
-// Modal Functions
-function showAddApplicationModal() {
-  document.getElementById('applicationModal').classList.add('active');
-  loadJobsForSelect();
-}
-
-function showAddJobModal() {
-  document.getElementById('jobModal').classList.add('active');
-  loadCompaniesForSelect('jobCompanyId');
-}
-
-function showAddCompanyModal() {
-  document.getElementById('companyModal').classList.add('active');
-}
-
-function showAddContactModal() {
-  document.getElementById('contactModal').classList.add('active');
-  loadCompaniesForSelect('contactCompanyId');
-}
-
-function closeModal(modalId) {
-  document.getElementById(modalId).classList.remove('active');
-}
-
-window.onclick = function(event) {
-  if (event.target.classList.contains('modal')) {
-    event.target.classList.remove('active');
-  }
-}
-
-document.addEventListener('click', (e) => {
-  if (!e.target.closest('.user-menu')) {
-    document.getElementById('userDropdown').classList.remove('active');
-  }
-});
-
-// ==================== PROFILE ====================
+// ==================== PROFILE SECTION ====================
 async function loadProfile() {
     try {
-        const response = await fetch(`${API_URL}/users/${currentUser.user_id}`);
-        const userData = await response.json();
-
-        document.getElementById('profileFullName').value = userData.full_name || '';
-        document.getElementById('profileEmail').value = userData.email || '';
-        document.getElementById('profilePhone').value = userData.phone || '';
-        document.getElementById('profileLocation').value = userData.location || '';
-        document.getElementById('profileSex').value = userData.sex || '';
-
-        // Load profile sections
-        loadEducation();
-        loadSkills();
-        loadCertifications();
-        loadLanguages();
-
-        // Load profile statistics
-        const statsResponse = await fetch(`${API_URL}/applications/user/${currentUser.user_id}`);
-        const applications = await statsResponse.json();
+        console.log('=== LOADING PROFILE ===');
+        console.log('Fetching user data for ID:', currentUser.userid);
         
-        document.getElementById('profileTotalApps').textContent = applications.length;
-        document.getElementById('profileInReview').textContent = applications.filter(a => a.status === 'In Review').length;
-        document.getElementById('profileInterviews').textContent = applications.filter(a => a.status === 'Interview').length;
-        document.getElementById('profileOffers').textContent = applications.filter(a => a.status === 'Offer').length;
+        const response = await fetch(`${API_URL}/users/${currentUser.userid}`);
+        console.log('Profile API response status:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const userData = await response.json();
+        console.log('Profile data received:', userData);
+        
+        // Populate form fields
+        const fields = {
+            profileFullName: userData.full_name || currentUser.full_name || '',
+            profileEmail: userData.email || currentUser.email || '',
+            profilePhone: userData.phone || '',
+            profileLocation: userData.location || '',
+            profileSex: userData.sex || ''
+        };
+        
+        Object.keys(fields).forEach(key => {
+            const el = document.getElementById(key);
+            if (el) {
+                el.value = fields[key];
+                console.log(`✓ Set ${key}: ${fields[key]}`);
+            }
+        });
+        
+        // Update currentUser with fresh data
+        currentUser.fullname = userData.fullname || currentUser.fullname;
+        currentUser.email = userData.email || currentUser.email;
+        currentUser.phone = userData.phone;
+        currentUser.location = userData.location;
+        currentUser.sex = userData.sex;
+        
+        // Update UI with fresh data
+        setUserUI();
+        
+        // Load profile sections
+        console.log('Loading profile sections...');
+        await Promise.allSettled([
+            loadSkills(),
+            loadEducation(),
+            loadCertifications(),
+            loadLanguages()
+        ]);
+        
+        await loadProfileStats();
+        
+        console.log('=== PROFILE LOAD COMPLETE ===');
+        
     } catch (error) {
-        console.error('Error loading profile:', error);
+        console.error('=== PROFILE LOADING ERROR ===');
+        console.error('Error:', error);
+        // If API fails, at least show currentUser data
+        if (currentUser.fullname) {
+            const fullnameEl = document.getElementById('profileFullName');
+            const emailEl = document.getElementById('profileEmail');
+            if (fullnameEl) fullnameEl.value = currentUser.fullname;
+            if (emailEl) emailEl.value = currentUser.email;
+        }
+    }
+}
+
+async function loadProfileStats() {
+    try {
+        const response = await fetch(`${API_URL}/applications/user/${currentUser.userid}`);
+        if (!response.ok) return;
+        
+        const applications = await response.json();
+        
+        const stats = {
+            profileTotalApps: applications.length,
+            profileInReview: applications.filter(a => a.status === 'In Review').length,
+            profileInterviews: applications.filter(a => a.status === 'Interview').length,
+            profileOffers: applications.filter(a => a.status === 'Offer').length
+        };
+        
+        Object.keys(stats).forEach(key => {
+            const el = document.getElementById(key);
+            if (el) el.textContent = stats[key];
+        });
+        
+    } catch (error) {
+        console.error('Profile stats error:', error);
     }
 }
 
 async function updateProfile(event) {
     event.preventDefault();
     
+    if (!currentUser || !currentUser.userid) {
+        alert('Invalid session. Please log in again.');
+        logout();
+        return;
+    }
+    
     const data = {
-        full_name: document.getElementById('profileFullName').value,
+        fullname: document.getElementById('profileFullName').value,
         email: document.getElementById('profileEmail').value,
         phone: document.getElementById('profilePhone').value,
         location: document.getElementById('profileLocation').value,
         sex: document.getElementById('profileSex').value
     };
-
+    
     try {
-        const response = await fetch(`${API_URL}/users/${currentUser.user_id}`, {
+        const response = await fetch(`${API_URL}/users/${currentUser.userid}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
-
+        
         if (response.ok) {
             alert('Profile updated successfully!');
-            currentUser.full_name = data.full_name;
+            currentUser.fullname = data.fullname;
+            currentUser.email = data.email;
+            currentUser.phone = data.phone;
+            currentUser.location = data.location;
+            currentUser.sex = data.sex;
             localStorage.setItem('user', JSON.stringify(currentUser));
-            document.getElementById('userName').textContent = data.full_name;
-            document.getElementById('sidebarUserName').textContent = data.full_name;
+            setUserUI();
         } else {
-            alert('Failed to update profile');
+            const errorData = await response.json();
+            alert(errorData.error || 'Failed to update profile');
         }
     } catch (error) {
         console.error('Error updating profile:', error);
-        alert('Error updating profile');
+        alert('Error updating profile.');
     }
 }
 
-// ==================== PROFILE: EDUCATION, SKILLS, CERTIFICATIONS, LANGUAGES ====================
-
-// Education Functions
-function showEducationModal() {
-    document.getElementById('educationModal').classList.add('active');
-    document.getElementById('educationForm').reset();
-    document.getElementById('education-id').value = '';
-}
-
-async function loadEducation() {
-    try {
-        const response = await fetch(`${API_URL}/profile/education?user_id=${currentUser.user_id}`);
-        const education = await response.json();
-        displayEducation(education);
-    } catch (error) {
-        console.error('Error loading education:', error);
-    }
-}
-
-function displayEducation(educationList) {
-    const container = document.getElementById('educationList');
-    if (!container) return;
-    
-    if (educationList.length === 0) {
-        container.innerHTML = '<p style="color: #6b7280;">No education added yet.</p>';
-        return;
-    }
-    
-    container.innerHTML = '';
-    educationList.forEach(edu => {
-        const endDate = edu.currently_studying ? 'Present' : (edu.end_date ? new Date(edu.end_date).toLocaleDateString() : 'N/A');
-        const startDate = new Date(edu.start_date).toLocaleDateString();
-        
-        const card = document.createElement('div');
-        card.className = 'data-card';
-        card.innerHTML = `
-            <div class="card-actions" style="float: right;">
-                <button class="btn-small btn-delete" onclick="deleteEducation(${edu.id})">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-            <h3>${edu.degree}${edu.field_of_study ? ' in ' + edu.field_of_study : ''}</h3>
-            <p><strong>${edu.school_name}</strong>${edu.school_location ? ' - ' + edu.school_location : ''}</p>
-            <p style="color: #6b7280; font-size: 13px;">${startDate} - ${endDate}</p>
-            ${edu.gpa ? `<p>GPA: ${edu.gpa}/10</p>` : ''}
-            ${edu.honors_awards ? `<p style="font-style: italic;">${edu.honors_awards}</p>` : ''}
-        `;
-        container.appendChild(card);
-    });
-}
-
-async function saveEducation(event) {
-    event.preventDefault();
-    
-    const data = {
-        user_id: currentUser.user_id, 
-        school_name: document.getElementById('school-name').value,
-        school_location: document.getElementById('school-location').value,
-        degree: document.getElementById('degree').value,
-        field_of_study: document.getElementById('field-of-study').value,
-        start_date: document.getElementById('edu-start-date').value,
-        end_date: document.getElementById('edu-end-date').value,
-        currently_studying: document.getElementById('currently-studying').checked,
-        gpa: document.getElementById('gpa').value,
-        honors_awards: document.getElementById('honors-awards').value
-    };
-    
-    console.log('Sending education data:', data); // Debug log
-    
-    try {
-        const response = await fetch(`${API_URL}/profile/education`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        
-        const result = await response.json();
-        
-        if (response.ok) {
-            closeModal('educationModal');
-            loadEducation();
-            alert('Education added successfully!');
-        } else {
-            console.error('Server error:', result);
-            alert(result.error || 'Failed to add education');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error saving education');
-    }
-}
-
-async function deleteEducation(id) {
-    if (!confirm('Are you sure you want to delete this education entry?')) return;
-    
-    try {
-        const response = await fetch(`${API_URL}/profile/education/${id}?user_id=${currentUser.user_id}`, {
-            method: 'DELETE'
-        });
-        
-        if (response.ok) {
-            loadEducation();
-            alert('Education deleted successfully!');
-        }
-    } catch (error) {
-        console.error('Error deleting education:', error);
-    }
-}
-
-// Skills Functions
-function showSkillsModal() {
-    document.getElementById('skillsModal').classList.add('active');
-    document.getElementById('skillsForm').reset();
-}
-
+// ==================== SKILLS ====================
 async function loadSkills() {
     try {
-        const response = await fetch(`${API_URL}/profile/skills?user_id=${currentUser.user_id}`);
+        console.log('=== LOADING SKILLS ===');
+        console.log('Fetching skills for user_id:', currentUser.userid);
+        
+        // CRITICAL: Send as userid parameter (backend expects userid)
+        const url = `${API_URL}/profile/skills?user_id=${currentUser.userid}`;
+        console.log('Skills API URL:', url);
+        
+        const response = await fetch(url);
+        console.log('Skills response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Skills error response:', errorText);
+            throw new Error(`Skills fetch failed: ${response.status}`);
+        }
+        
         const skills = await response.json();
+        console.log('Skills data received:', skills);
+        console.log('Number of skills:', skills.length);
+        
         displaySkills(skills);
     } catch (error) {
-        console.error('Error loading skills:', error);
+        console.error('=== SKILLS LOADING ERROR ===');
+        console.error('Error:', error);
+        const container = document.getElementById('skillsList');
+        if (container) {
+            container.innerHTML = '<p style="color: #6b7280;">No skills added yet.</p>';
+        }
     }
 }
 
-function displaySkills(skillsList) {
+function displaySkills(skills) {
     const container = document.getElementById('skillsList');
-    if (!container) return;
-    
-    if (skillsList.length === 0) {
-        container.innerHTML = '<p style="color: #6b7280;">No skills added yet.</p>';
+    if (!container) {
+        console.error('Skills container not found');
         return;
     }
     
-    container.innerHTML = '';
-    skillsList.forEach(skill => {
-        const badge = document.createElement('span');
-        badge.className = 'skill-badge';
-        badge.innerHTML = `
-            ${skill.skill_name} - <strong>${skill.proficiency_level}</strong>
-            <button onclick="deleteSkill(${skill.id})" style="background: none; border: none; color: #ef4444; margin-left: 8px; cursor: pointer; font-size: 18px;">&times;</button>
+    if (!skills || skills.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-code" style="font-size: 48px; color: #6b7280;"></i>
+                <h4>No skills added yet</h4>
+                <p>Add your professional skills</p>
+                <button class="btn-primary btn-small" onclick="showSkillsModal()">Add Skill</button>
+            </div>
         `;
-        container.appendChild(badge);
-    });
+        return;
+    }
+    
+    console.log('Displaying', skills.length, 'skills');
+    
+    container.innerHTML = skills.map(skill => `
+        <div class="skill-item">
+            <div class="skill-info">
+                <span class="skill-name">${skill.skill_name || skill.skillname || 'Skill'}</span>
+                <span class="skill-level">${skill.proficiency_level || skill.proficiencylevel || 'N/A'}</span>
+            </div>
+            <button class="btn-delete btn-small" onclick="deleteSkill(${skill.id})" title="Delete">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+function showSkillsModal(editSkill = null) {
+    const modal = document.getElementById('skillsModal');
+    const form = document.getElementById('skillsForm');
+    
+    if (!modal || !form) {
+        console.error('Skills modal or form not found');
+        return;
+    }
+    
+    if (editSkill) {
+        document.getElementById('skill-id').value = editSkill.id;
+        document.getElementById('skill-name').value = editSkill.skill_name || editSkill.skillname;
+        document.getElementById('proficiency-level').value = editSkill.proficiency_level || editSkill.proficiencylevel;
+    } else {
+        form.reset();
+        const skillIdEl = document.getElementById('skill-id');
+        if (skillIdEl) skillIdEl.value = '';
+    }
+    
+    modal.classList.add('active');
 }
 
 async function saveSkill(event) {
     event.preventDefault();
     
-    const data = {
-        user_id: currentUser.user_id, 
+    const skillIdEl = document.getElementById('skill-id');
+    const skillId = skillIdEl ? skillIdEl.value : '';
+    
+    const skillData = {
+        user_id: parseInt(currentUser.userid), // CRITICAL: Send as number
         skill_name: document.getElementById('skill-name').value,
         proficiency_level: document.getElementById('proficiency-level').value
     };
     
-    console.log('Sending skill data:', data); // Debug log
+    console.log('Saving skill:', skillData);
     
     try {
-        const response = await fetch(`${API_URL}/profile/skills`, {
-            method: 'POST',
+        const url = skillId ? 
+            `${API_URL}/profile/skills/${skillId}` : 
+            `${API_URL}/profile/skills`;
+        
+        const method = skillId ? 'PUT' : 'POST';
+        
+        console.log(`${method} ${url}`);
+        
+        const response = await fetch(url, {
+            method,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: JSON.stringify(skillData)
         });
         
-        const result = await response.json();
+        console.log('Save skill response status:', response.status);
         
         if (response.ok) {
             closeModal('skillsModal');
-            loadSkills();
-            alert('Skill added successfully!');
+            await loadSkills();
+            alert(skillId ? 'Skill updated!' : 'Skill added successfully!');
         } else {
-            console.error('Server error:', result);
-            alert(result.error || 'Failed to add skill');
+            const errorData = await response.json();
+            console.error('Save skill error:', errorData);
+            alert(errorData.error || 'Failed to save skill');
         }
     } catch (error) {
-        console.error('Error:', error);
-        alert('Error saving skill');
+        console.error('Error saving skill:', error);
+        alert('Error saving skill.');
     }
 }
 
-async function deleteSkill(id) {
-    if (!confirm('Are you sure you want to delete this skill?')) return;
+async function deleteSkill(skillId) {
+    if (!confirm('Delete this skill?')) return;
     
     try {
-        const response = await fetch(`${API_URL}/profile/skills/${id}?user_id=${currentUser.user_id}`, {
+        const response = await fetch(`${API_URL}/profile/skills/${skillId}?user_id=${currentUser.userid}`, {
             method: 'DELETE'
         });
         
         if (response.ok) {
-            loadSkills();
-            alert('Skill deleted successfully!');
+            await loadSkills();
+            alert('Skill deleted!');
+        } else {
+            const errorData = await response.json();
+            alert(errorData.error || 'Failed to delete skill');
         }
     } catch (error) {
         console.error('Error deleting skill:', error);
     }
 }
 
-// Certifications Functions
-function showCertificationModal() {
-    document.getElementById('certificationModal').classList.add('active');
-    document.getElementById('certificationForm').reset();
-}
-
-async function loadCertifications() {
+// ==================== EDUCATION ====================
+async function loadEducation() {
     try {
-        const response = await fetch(`${API_URL}/profile/certifications?user_id=${currentUser.user_id}`);
-        const certs = await response.json();
-        displayCertifications(certs);
+        console.log('=== LOADING EDUCATION ===');
+        console.log('Fetching education for user_id:', currentUser.userid);
+        
+        const url = `${API_URL}/profile/education?user_id=${currentUser.userid}`;
+        console.log('Education API URL:', url);
+        
+        const response = await fetch(url);
+        console.log('Education response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Education error response:', errorText);
+            throw new Error(`Education fetch failed: ${response.status}`);
+        }
+        
+        const education = await response.json();
+        console.log('Education data received:', education);
+        console.log('Number of education entries:', education.length);
+        
+        displayEducation(education);
     } catch (error) {
-        console.error('Error loading certifications:', error);
+        console.error('=== EDUCATION LOADING ERROR ===');
+        console.error('Error:', error);
+        const container = document.getElementById('educationList');
+        if (container) {
+            container.innerHTML = '<p style="color: #6b7280;">No education history.</p>';
+        }
     }
 }
 
-function displayCertifications(certsList) {
-    const container = document.getElementById('certificationsList');
-    if (!container) return;
-    
-    if (certsList.length === 0) {
-        container.innerHTML = '<p style="color: #6b7280;">No certifications added yet.</p>';
+function displayEducation(education) {
+    const container = document.getElementById('educationList');
+    if (!container) {
+        console.error('Education container not found');
         return;
     }
     
-    container.innerHTML = '';
-    certsList.forEach(cert => {
-        const issueDate = cert.issue_date ? new Date(cert.issue_date).toLocaleDateString() : 'N/A';
+    if (!education || education.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-graduation-cap" style="font-size: 48px; color: #6b7280;"></i>
+                <h4>No education history</h4>
+                <p>Add your educational background</p>
+                <button class="btn-primary btn-small" onclick="showEducationModal()">Add Education</button>
+            </div>
+        `;
+        return;
+    }
+    
+    console.log('Displaying', education.length, 'education entries');
+    
+    container.innerHTML = education.map(edu => {
+        const endDate = edu.currently_studying ? 'Present' : 
+                       (edu.end_date ? new Date(edu.end_date).toLocaleDateString() : 'N/A');
+        const startDate = edu.start_date ? new Date(edu.start_date).toLocaleDateString() : 'N/A';
         
-        const card = document.createElement('div');
-        card.className = 'data-card';
-        card.innerHTML = `
-            <div class="card-actions" style="float: right;">
-                <button class="btn-small btn-delete" onclick="deleteCertification(${cert.id})">
-                    <i class="fas fa-trash"></i>
+        return `
+            <div class="education-item">
+                <h4>${edu.degree} ${edu.field_of_study ? `in ${edu.field_of_study}` : ''}</h4>
+                <div>${edu.school_name}</div>
+                <div>${startDate} - ${endDate}</div>
+                ${edu.gpa ? `<div>GPA: ${edu.gpa}</div>` : ''}
+                <button class="btn-delete btn-small" onclick="deleteEducation(${edu.id})">
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
-            <h3>${cert.certification_name}</h3>
-            ${cert.issuing_authority ? `<p><strong>${cert.issuing_authority}</strong></p>` : ''}
-            <p style="color: #6b7280; font-size: 13px;">Issued: ${issueDate}</p>
         `;
-        container.appendChild(card);
-    });
+    }).join('');
+}
+
+function showEducationModal(editEdu = null) {
+    const modal = document.getElementById('educationModal');
+    const form = document.getElementById('educationForm');
+    
+    if (!modal || !form) {
+        console.error('Education modal or form not found');
+        return;
+    }
+    
+    if (editEdu) {
+        document.getElementById('education-id').value = editEdu.id;
+        document.getElementById('school-name').value = editEdu.school_name;
+        document.getElementById('school-location').value = editEdu.school_location || '';
+        document.getElementById('degree').value = editEdu.degree;
+        document.getElementById('field-of-study').value = editEdu.field_of_study || '';
+        document.getElementById('edu-start-date').value = editEdu.start_date ? editEdu.start_date.slice(0, 7) : '';
+        document.getElementById('edu-end-date').value = editEdu.end_date ? editEdu.end_date.slice(0, 7) : '';
+        document.getElementById('currently-studying').checked = editEdu.currently_studying || false;
+        document.getElementById('gpa').value = editEdu.gpa || '';
+        document.getElementById('honors-awards').value = editEdu.honors_awards || '';
+    } else {
+        form.reset();
+        document.getElementById('education-id').value = '';
+    }
+    
+    modal.classList.add('active');
+}
+
+async function saveEducation(event) {
+    event.preventDefault();
+    
+    const eduIdEl = document.getElementById('education-id');
+    const eduId = eduIdEl ? eduIdEl.value : '';
+    
+    const eduData = {
+        user_id: parseInt(currentUser.userid), // CRITICAL: Send as number
+        school_name: document.getElementById('school-name').value,
+        school_location: document.getElementById('school-location').value,
+        degree: document.getElementById('degree').value,
+        field_of_study: document.getElementById('field-of-study').value,
+        start_date: document.getElementById('edu-start-date').value,
+        end_date: document.getElementById('currently-studying').checked ? null : document.getElementById('edu-end-date').value,
+        currently_studying: document.getElementById('currently-studying').checked,
+        gpa: document.getElementById('gpa').value,
+        honors_awards: document.getElementById('honors-awards').value
+    };
+    
+    console.log('Saving education:', eduData);
+    
+    try {
+        const url = eduId ? `${API_URL}/profile/education/${eduId}` : `${API_URL}/profile/education`;
+        const method = eduId ? 'PUT' : 'POST';
+        
+        console.log(`${method} ${url}`);
+        
+        const response = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(eduData)
+        });
+        
+        console.log('Save education response status:', response.status);
+        
+        if (response.ok) {
+            closeModal('educationModal');
+            await loadEducation();
+            alert(eduId ? 'Education updated!' : 'Education added successfully!');
+        } else {
+            const errorData = await response.json();
+            console.error('Save education error:', errorData);
+            alert(errorData.error || 'Failed to save education');
+        }
+    } catch (error) {
+        console.error('Error saving education:', error);
+        alert('Error saving education.');
+    }
+}
+
+async function deleteEducation(eduId) {
+    if (!confirm('Delete this education entry?')) return;
+    
+    try {
+        const response = await fetch(`${API_URL}/profile/education/${eduId}?user_id=${currentUser.userid}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            await loadEducation();
+            alert('Education deleted!');
+        } else {
+            const errorData = await response.json();
+            alert(errorData.error || 'Failed to delete education');
+        }
+    } catch (error) {
+        console.error('Error deleting education:', error);
+    }
+}
+
+// ==================== CERTIFICATIONS ====================
+async function loadCertifications() {
+    try {
+        console.log('=== LOADING CERTIFICATIONS ===');
+        console.log('Fetching certifications for user_id:', currentUser.userid);
+        
+        const url = `${API_URL}/profile/certifications?user_id=${currentUser.userid}`;
+        console.log('Certifications API URL:', url);
+        
+        const response = await fetch(url);
+        console.log('Certifications response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Certifications error response:', errorText);
+            throw new Error(`Certifications fetch failed: ${response.status}`);
+        }
+        
+        const certifications = await response.json();
+        console.log('Certifications data received:', certifications);
+        console.log('Number of certifications:', certifications.length);
+        
+        displayCertifications(certifications);
+    } catch (error) {
+        console.error('=== CERTIFICATIONS LOADING ERROR ===');
+        console.error('Error:', error);
+        const container = document.getElementById('certificationsList');
+        if (container) {
+            container.innerHTML = '<p style="color: #6b7280;">No certifications.</p>';
+        }
+    }
+}
+
+function displayCertifications(certifications) {
+    const container = document.getElementById('certificationsList');
+    if (!container) {
+        console.error('Certifications container not found');
+        return;
+    }
+    
+    if (!certifications || certifications.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-certificate" style="font-size: 48px; color: #6b7280;"></i>
+                <h4>No certifications</h4>
+                <p>Add your professional certifications</p>
+                <button class="btn-primary btn-small" onclick="showCertificationModal()">Add Certification</button>
+            </div>
+        `;
+        return;
+    }
+    
+    console.log('Displaying', certifications.length, 'certifications');
+    
+    container.innerHTML = certifications.map(cert => {
+        const issueDate = cert.issue_date ? new Date(cert.issue_date).toLocaleDateString() : 'N/A';
+        
+        return `
+            <div class="certification-item">
+                <h4>${cert.certification_name}</h4>
+                ${cert.issuing_authority ? `<div>${cert.issuing_authority}</div>` : ''}
+                <div>Issued: ${issueDate}</div>
+                <button class="btn-delete btn-small" onclick="deleteCertification(${cert.id})">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+function showCertificationModal(editCert = null) {
+    const modal = document.getElementById('certificationModal');
+    const form = document.getElementById('certificationForm');
+    
+    if (!modal || !form) {
+        console.error('Certification modal or form not found');
+        return;
+    }
+    
+    if (editCert) {
+        document.getElementById('certification-id').value = editCert.id;
+        document.getElementById('cert-name').value = editCert.certification_name;
+        document.getElementById('issuing-authority').value = editCert.issuing_authority || '';
+        document.getElementById('issue-date').value = editCert.issue_date ? editCert.issue_date.slice(0, 7) : '';
+    } else {
+        form.reset();
+        const certIdEl = document.getElementById('certification-id');
+        if (certIdEl) certIdEl.value = '';
+    }
+    
+    modal.classList.add('active');
 }
 
 async function saveCertification(event) {
     event.preventDefault();
     
-    const data = {
-        user_id: currentUser.user_id,
+    const certIdEl = document.getElementById('certification-id');
+    const certId = certIdEl ? certIdEl.value : '';
+    
+    const certData = {
+        user_id: parseInt(currentUser.userid), // CRITICAL: Send as number
         certification_name: document.getElementById('cert-name').value,
         issuing_authority: document.getElementById('issuing-authority').value,
         issue_date: document.getElementById('issue-date').value
     };
     
-    console.log('Sending certification data:', data); // Debug log
+    console.log('Saving certification:', certData);
     
     try {
-        const response = await fetch(`${API_URL}/profile/certifications`, {
-            method: 'POST',
+        const url = certId ? `${API_URL}/profile/certifications/${certId}` : `${API_URL}/profile/certifications`;
+        const method = certId ? 'PUT' : 'POST';
+        
+        console.log(`${method} ${url}`);
+        
+        const response = await fetch(url, {
+            method,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: JSON.stringify(certData)
         });
         
-        const result = await response.json();
+        console.log('Save certification response status:', response.status);
         
         if (response.ok) {
             closeModal('certificationModal');
-            loadCertifications();
-            alert('Certification added successfully!');
+            await loadCertifications();
+            alert(certId ? 'Certification updated!' : 'Certification added successfully!');
         } else {
-            console.error('Server error:', result);
-            alert(result.error || 'Failed to add certification');
+            const errorData = await response.json();
+            console.error('Save certification error:', errorData);
+            alert(errorData.error || 'Failed to save certification');
         }
     } catch (error) {
-        console.error('Error:', error);
-        alert('Error saving certification');
+        console.error('Error saving certification:', error);
+        alert('Error saving certification.');
     }
 }
 
-async function deleteCertification(id) {
-    if (!confirm('Are you sure you want to delete this certification?')) return;
+async function deleteCertification(certId) {
+    if (!confirm('Delete this certification?')) return;
     
     try {
-        const response = await fetch(`${API_URL}/profile/certifications/${id}?user_id=${currentUser.user_id}`, {
+        const response = await fetch(`${API_URL}/profile/certifications/${certId}?user_id=${currentUser.userid}`, {
             method: 'DELETE'
         });
         
         if (response.ok) {
-            loadCertifications();
-            alert('Certification deleted successfully!');
+            await loadCertifications();
+            alert('Certification deleted!');
+        } else {
+            const errorData = await response.json();
+            alert(errorData.error || 'Failed to delete certification');
         }
     } catch (error) {
         console.error('Error deleting certification:', error);
     }
 }
 
-// Languages Functions
-function showLanguageModal() {
-    document.getElementById('languageModal').classList.add('active');
-    document.getElementById('languageForm').reset();
-}
-
+// ==================== LANGUAGES ====================
 async function loadLanguages() {
     try {
-        const response = await fetch(`${API_URL}/profile/languages?user_id=${currentUser.user_id}`);
+        console.log('=== LOADING LANGUAGES ===');
+        console.log('Fetching languages for user_id:', currentUser.userid);
+        
+        const url = `${API_URL}/profile/languages?user_id=${currentUser.userid}`;
+        console.log('Languages API URL:', url);
+        
+        const response = await fetch(url);
+        console.log('Languages response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Languages error response:', errorText);
+            throw new Error(`Languages fetch failed: ${response.status}`);
+        }
+        
         const languages = await response.json();
+        console.log('Languages data received:', languages);
+        console.log('Number of languages:', languages.length);
+        
         displayLanguages(languages);
     } catch (error) {
-        console.error('Error loading languages:', error);
+        console.error('=== LANGUAGES LOADING ERROR ===');
+        console.error('Error:', error);
+        const container = document.getElementById('languagesList');
+        if (container) {
+            container.innerHTML = '<p style="color: #6b7280;">No languages added.</p>';
+        }
     }
 }
 
-function displayLanguages(languagesList) {
+function displayLanguages(languages) {
     const container = document.getElementById('languagesList');
-    if (!container) return;
-    
-    if (languagesList.length === 0) {
-        container.innerHTML = '<p style="color: #6b7280;">No languages added yet.</p>';
+    if (!container) {
+        console.error('Languages container not found');
         return;
     }
     
-    container.innerHTML = '';
-    languagesList.forEach(lang => {
-        const badge = document.createElement('span');
-        badge.className = 'skill-badge';
-        badge.innerHTML = `
-            ${lang.language_name} - <strong>${lang.proficiency_level}</strong>
-            <button onclick="deleteLanguage(${lang.id})" style="background: none; border: none; color: #ef4444; margin-left: 8px; cursor: pointer; font-size: 18px;">&times;</button>
+    if (!languages || languages.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-globe" style="font-size: 48px; color: #6b7280;"></i>
+                <h4>No languages added</h4>
+                <p>Add languages you speak</p>
+                <button class="btn-primary btn-small" onclick="showLanguageModal()">Add Language</button>
+            </div>
         `;
-        container.appendChild(badge);
-    });
+        return;
+    }
+    
+    console.log('Displaying', languages.length, 'languages');
+    
+    container.innerHTML = languages.map(lang => `
+        <div class="language-item">
+            <div class="language-info">
+                <span class="language-name">${lang.language_name || lang.languagename}</span>
+                <span class="language-level">${lang.proficiency_level || lang.proficiencylevel}</span>
+            </div>
+            <button class="btn-delete btn-small" onclick="deleteLanguage(${lang.id})">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+function showLanguageModal(editLang = null) {
+    const modal = document.getElementById('languageModal');
+    const form = document.getElementById('languageForm');
+    
+    if (!modal || !form) {
+        console.error('Language modal or form not found');
+        return;
+    }
+    
+    if (editLang) {
+        document.getElementById('language-id').value = editLang.id;
+        document.getElementById('language-name').value = editLang.language_name || editLang.languagename;
+        document.getElementById('lang-proficiency').value = editLang.proficiency_level || editLang.proficiencylevel;
+    } else {
+        form.reset();
+        const langIdEl = document.getElementById('language-id');
+        if (langIdEl) langIdEl.value = '';
+    }
+    
+    modal.classList.add('active');
 }
 
 async function saveLanguage(event) {
     event.preventDefault();
     
-    const data = {
-        user_id: currentUser.user_id, 
+    const langIdEl = document.getElementById('language-id');
+    const langId = langIdEl ? langIdEl.value : '';
+    
+    const langData = {
+        user_id: parseInt(currentUser.userid), // CRITICAL: Send as number
         language_name: document.getElementById('language-name').value,
         proficiency_level: document.getElementById('lang-proficiency').value
     };
     
-    console.log('Sending language data:', data); // Debug log
+    console.log('Saving language:', langData);
     
     try {
-        const response = await fetch(`${API_URL}/profile/languages`, {
-            method: 'POST',
+        const url = langId ? `${API_URL}/profile/languages/${langId}` : `${API_URL}/profile/languages`;
+        const method = langId ? 'PUT' : 'POST';
+        
+        console.log(`${method} ${url}`);
+        
+        const response = await fetch(url, {
+            method,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: JSON.stringify(langData)
         });
         
-        const result = await response.json();
+        console.log('Save language response status:', response.status);
         
         if (response.ok) {
             closeModal('languageModal');
-            loadLanguages();
-            alert('Language added successfully!');
+            await loadLanguages();
+            alert(langId ? 'Language updated!' : 'Language added successfully!');
         } else {
-            console.error('Server error:', result);
-            alert(result.error || 'Failed to add language');
+            const errorData = await response.json();
+            console.error('Save language error:', errorData);
+            alert(errorData.error || 'Failed to save language');
         }
     } catch (error) {
-        console.error('Error:', error);
-        alert('Error saving language');
+        console.error('Error saving language:', error);
+        alert('Error saving language.');
     }
 }
 
-async function deleteLanguage(id) {
-    if (!confirm('Are you sure you want to delete this language?')) return;
+async function deleteLanguage(langId) {
+    if (!confirm('Delete this language?')) return;
     
     try {
-        const response = await fetch(`${API_URL}/profile/languages/${id}?user_id=${currentUser.user_id}`, {
+        const response = await fetch(`${API_URL}/profile/languages/${langId}?user_id=${currentUser.userid}`, {
             method: 'DELETE'
         });
         
         if (response.ok) {
-            loadLanguages();
-            alert('Language deleted successfully!');
+            await loadLanguages();
+            alert('Language deleted!');
+        } else {
+            const errorData = await response.json();
+            alert(errorData.error || 'Failed to delete language');
         }
     } catch (error) {
         console.error('Error deleting language:', error);
     }
 }
 
-
 // ==================== APPLICATIONS ====================
 async function loadApplications() {
-  try {
-    const response = await fetch(`${API_URL}/applications/user/${currentUser.user_id}`);
-    allApplications = await response.json();
-    displayApplications(allApplications);
-  } catch (error) {
-    console.error('Error loading applications:', error);
-    document.getElementById('applicationsList').innerHTML = 
-      '<p style="grid-column: 1/-1; text-align: center; color: red;">Error loading applications</p>';
-  }
+    try {
+        const response = await fetch(`${API_URL}/applications/user/${currentUser.userid}`);
+        if (!response.ok) throw new Error(`Applications fetch failed`);
+        
+        allApplications = await response.json();
+        displayApplications(allApplications);
+        calculateStatistics();
+    } catch (error) {
+        console.error('Error loading applications:', error);
+        const listEl = document.getElementById('applicationsList');
+        if (listEl) {
+            listEl.innerHTML = '<p style="color: #6b7280;">Failed to load applications.</p>';
+        }
+    }
 }
 
 function displayApplications(applications) {
-  const listEl = document.getElementById('applicationsList');
-  
-  if (applications.length === 0) {
-    listEl.innerHTML = `
-      <div class="empty-state">
-        <i class="fas fa-inbox"></i>
-        <h3>No applications yet</h3>
-        <p>Browse jobs and start applying to build your application history</p>
-        <button class="btn-apply-modern" onclick="showSection('jobs')">
-          <i class="fas fa-search"></i>
-          Browse Jobs
-        </button>
-      </div>
-    `;
-    return;
-  }
-
-  listEl.innerHTML = applications.map(app => `
-    <div class="application-card">
-      <div class="application-header">
-        <div class="application-title">
-          <h3>${app.job_title}</h3>
-          <div class="application-company">
-            <i class="fas fa-building"></i>
-            ${app.company_name}
-          </div>
-        </div>
-        <span class="application-status ${app.status.toLowerCase().replace(/ /g, '-')}">${app.status}</span>
-      </div>
-
-      <div class="application-details">
-        <div class="detail-item">
-          <i class="fas fa-map-marker-alt"></i>
-          <span>${app.location || 'Not specified'}</span>
-        </div>
-        <div class="detail-item">
-          <i class="fas fa-briefcase"></i>
-          <span>${app.employment_type}</span>
-        </div>
-        <div class="detail-item">
-          <i class="fas fa-calendar"></i>
-          <strong>Applied:</strong> ${new Date(app.application_date).toLocaleDateString()}
-        </div>
-      </div>
-
-      ${app.cover_letter ? `
-        <div class="detail-item" style="margin-top: 12px;">
-          <i class="fas fa-file-alt"></i>
-          <span style="font-style: italic; color: #5f6368;">${app.cover_letter.substring(0, 100)}${app.cover_letter.length > 100 ? '...' : ''}</span>
-        </div>
-      ` : ''}
-
-      <div class="application-footer">
-        <button class="btn-save-job" onclick="deleteApplication(${app.application_id})">
-          <i class="fas fa-trash"></i>
-          Withdraw
-        </button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function filterApplications() {
-  const status = document.getElementById('statusFilter').value;
-  const filtered = status ? allApplications.filter(app => app.status === status) : allApplications;
-  displayApplications(filtered);
-}
-
-function searchApplications() {
-  const query = document.getElementById('searchApplications').value.toLowerCase();
-  const filtered = allApplications.filter(app => 
-    app.job_title.toLowerCase().includes(query) ||
-    app.company_name.toLowerCase().includes(query)
-  );
-  displayApplications(filtered);
-}
-
-async function loadJobsForSelect() {
-  try {
-    const response = await fetch(`${API_URL}/jobs`);
-    const jobs = await response.json();
+    const listEl = document.getElementById('applicationsList');
+    if (!listEl) return;
     
-    const selectEl = document.getElementById('appJobId');
-    selectEl.innerHTML = '<option value="">Select a job</option>' + 
-      jobs.map(job => `<option value="${job.job_id}">${job.job_title} - ${job.company_name}</option>`).join('');
-  } catch (error) {
-    console.error('Error loading jobs for select:', error);
-  }
+    if (!applications || applications.length === 0) {
+        listEl.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1;">
+                <i class="fas fa-inbox" style="font-size: 64px; color: #6b7280;"></i>
+                <h3>No applications yet</h3>
+                <p>Browse jobs and start applying</p>
+                <button class="btn-primary" onclick="showSection('jobs')">
+                    <i class="fas fa-search"></i> Browse Jobs
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    listEl.innerHTML = applications.map(app => {
+        const statusClass = app.status.toLowerCase().replace(' ', '-');
+        const appliedDate = new Date(app.application_date).toLocaleDateString();
+        
+        return `
+            <div class="application-card">
+                <div class="application-header">
+                    <div class="application-title">
+                        <h3>${app.job_title || 'Job Title'}</h3>
+                        <div class="application-company">
+                            <i class="fas fa-building"></i>
+                            ${app.company_name || 'Unknown Company'}
+                        </div>
+                    </div>
+                    <span class="application-status ${statusClass}">${app.status}</span>
+                </div>
+                <div class="application-details">
+                    <div class="detail-item">
+                        <i class="fas fa-calendar"></i>
+                        <strong>Applied:</strong> ${appliedDate}
+                    </div>
+                </div>
+                <div class="application-actions">
+                    <button class="btn-delete btn-small" onclick="deleteApplication(${app.applicationid})">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
-document.getElementById('applicationForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const applicationData = {
-    user_id: currentUser.user_id,
-    job_id: document.getElementById('appJobId').value,
-    application_date: document.getElementById('appDate').value,
-    status: document.getElementById('appStatus').value,
-    resume: document.getElementById('appResume').value,
-    cover_letter: document.getElementById('appCoverLetter').value
-  };
-
-  try {
-    const response = await fetch(`${API_URL}/applications`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(applicationData)
-    });
-
-    if (response.ok) {
-      alert('Application submitted successfully!');
-      closeModal('applicationModal');
-      document.getElementById('applicationForm').reset();
-      loadApplications();
-      calculateStatistics();
-    } else {
-      const data = await response.json();
-      alert(data.error || 'Failed to submit application');
+async function deleteApplication(appId) {
+    if (!confirm('Delete this application?')) return;
+    
+    try {
+        const response = await fetch(`${API_URL}/applications/${appId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            await loadApplications();
+            alert('Application deleted!');
+        }
+    } catch (error) {
+        console.error('Error deleting application:', error);
     }
-  } catch (error) {
-    alert('Connection error. Please try again.');
-  }
-});
-
-async function deleteApplication(id) {
-  if (!confirm('Are you sure you want to delete this application?')) return;
-  
-  try {
-    const response = await fetch(`${API_URL}/applications/${id}`, { method: 'DELETE' });
-    if (response.ok) {
-      alert('Application deleted successfully!');
-      loadApplications();
-      calculateStatistics();
-    }
-  } catch (error) {
-    alert('Failed to delete application');
-  }
-}
-
-function editApplication(id) {
-  alert('Edit functionality coming soon!');
 }
 
 // ==================== JOBS ====================
 async function loadJobs() {
-  try {
-    const response = await fetch(`${API_URL}/jobs`);
-    allJobs = await response.json();
-    displayJobs(allJobs);
-  } catch (error) {
-    console.error('Error loading jobs:', error);
-    document.getElementById('jobsList').innerHTML = 
-      '<p style="grid-column: 1/-1; text-align: center; color: red;">Error loading jobs</p>';
-  }
-}
-function displayJobs(jobs) {
-  const listEl = document.getElementById('jobsList');
-  
-  if (jobs.length === 0) {
-    listEl.innerHTML = `
-      <div class="empty-state">
-        <i class="fas fa-briefcase"></i>
-        <h3>No jobs available</h3>
-        <p>Check back later for new opportunities</p>
-      </div>
-    `;
-    return;
-  }
-
-  listEl.innerHTML = jobs.map(job => {
-    const isApplied = allApplications.some(app => app.job_id === job.job_id);
-    const employmentTypeClass = `type-${job.employment_type.toLowerCase().replace(/ /g, '-')}`;
-    
-    return `
-      <div class="job-card" id="job-${job.job_id}">
-        <div class="job-card-header">
-          <div class="job-card-title">
-            <h3 onclick="toggleJobDetails(${job.job_id})">${job.job_title}</h3>
-            <div class="job-card-company">
-              <div class="company-icon">
-                <i class="fas fa-building"></i>
-              </div>
-              <span class="company-name">${job.company_name}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="job-card-meta">
-          <div class="meta-item">
-            <i class="fas fa-map-marker-alt"></i>
-            <span>${job.location || 'Location not specified'}</span>
-          </div>
-          ${job.salary_range ? `
-            <div class="meta-item">
-              <i class="fas fa-dollar-sign"></i>
-              <span>${job.salary_range}</span>
-            </div>
-          ` : ''}
-          ${job.application_deadline ? `
-            <div class="meta-item">
-              <i class="fas fa-clock"></i>
-              <span>Deadline: ${new Date(job.application_deadline).toLocaleDateString()}</span>
-            </div>
-          ` : ''}
-        </div>
-
-        <div class="job-card-tags">
-          <span class="job-tag ${employmentTypeClass}">${job.employment_type}</span>
-          ${job.job_url ? '<span class="job-tag"><i class="fas fa-external-link-alt"></i> External</span>' : ''}
-        </div>
-
-        ${job.job_description ? `
-          <div class="job-card-description" id="desc-${job.job_id}">
-            ${job.job_description}
-          </div>
-          <div class="job-qualifications" id="qual-${job.job_id}">
-            <h4>Minimum qualifications</h4>
-            <ul>
-              <li>Bachelor's degree or equivalent practical experience</li>
-              <li>Relevant work experience in the field</li>
-            </ul>
-          </div>
-        ` : ''}
-
-        <div class="job-card-footer">
-          <div class="job-posted-date">
-            <i class="far fa-calendar"></i>
-            Posted ${formatDate(job.posted_date || job.created_at)}
-          </div>
-          <div class="job-actions">
-            ${job.job_description ? `
-              <button class="btn-learn-more" onclick="toggleJobDetails(${job.job_id})">
-                <i class="fas fa-chevron-down" id="chevron-${job.job_id}"></i>
-                Learn more
-              </button>
-            ` : ''}
-            ${job.job_url ? `
-              <a href="${job.job_url}" target="_blank" class="btn-save-job">
-                <i class="fas fa-external-link-alt"></i>
-                View Posting
-              </a>
-            ` : ''}
-            <button class="btn-apply-modern" 
-                    onclick="applyToJob(${job.job_id}, '${job.job_title.replace(/'/g, "\\'")}')"
-                    ${isApplied ? 'disabled' : ''}>
-              <i class="fas ${isApplied ? 'fa-check' : 'fa-paper-plane'}"></i>
-              ${isApplied ? 'Applied' : 'Apply'}
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-// Toggle job details expansion
-function toggleJobDetails(jobId) {
-  const descEl = document.getElementById(`desc-${jobId}`);
-  const qualEl = document.getElementById(`qual-${jobId}`);
-  const chevron = document.getElementById(`chevron-${jobId}`);
-  
-  if (descEl) {
-    descEl.classList.toggle('expanded');
-  }
-  if (qualEl) {
-    qualEl.classList.toggle('show');
-  }
-  if (chevron) {
-    chevron.classList.toggle('fa-chevron-down');
-    chevron.classList.toggle('fa-chevron-up');
-  }
-}
-
-// Format date helper
-function formatDate(dateString) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffTime = Math.abs(now - date);
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-  return date.toLocaleDateString();
-}
-
-
-// Apply to Job Function
-async function applyToJob(jobId, jobTitle) {
-  // Check if already applied
-  const alreadyApplied = allApplications.some(app => app.job_id === jobId);
-  if (alreadyApplied) {
-    alert('You have already applied to this job!');
-    return;
-  }
-
-  if (!confirm(`Do you want to apply for "${jobTitle}"?`)) return;
-
-  const applicationData = {
-    user_id: currentUser.user_id,
-    job_id: jobId,
-    application_date: new Date().toISOString().split('T')[0],
-    status: 'Applied'
-  };
-
-  try {
-    const response = await fetch(`${API_URL}/applications`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(applicationData)
-    });
-
-    if (response.ok) {
-      alert('Application submitted successfully! Check "My Applications" to view it.');
-      loadApplications();
-      calculateStatistics();
-    } else {
-      const data = await response.json();
-      alert(data.error || 'Failed to submit application');
+    try {
+        const response = await fetch(`${API_URL}/jobs`);
+        if (!response.ok) throw new Error(`Jobs fetch failed`);
+        
+        allJobs = await response.json();
+        displayJobs(allJobs);
+    } catch (error) {
+        console.error('Error loading jobs:', error);
+        const listEl = document.getElementById('jobsList');
+        if (listEl) {
+            listEl.innerHTML = '<p style="color: #6b7280;">Failed to load jobs.</p>';
+        }
     }
-  } catch (error) {
-    alert('Connection error. Please try again.');
-  }
 }
 
-// ==================== JOBS: FILTER & SEARCH ====================
+function displayJobs(jobs) {
+    const listEl = document.getElementById('jobsList');
+    if (!listEl) return;
+    
+    if (!jobs || jobs.length === 0) {
+        listEl.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1;">
+                <i class="fas fa-briefcase" style="font-size: 64px; color: #6b7280;"></i>
+                <h3>No jobs available</h3>
+                <p>Check back later for opportunities</p>
+            </div>
+        `;
+        return;
+    }
+    
+    listEl.innerHTML = jobs.map(job => {
+        const isApplied = allApplications.some(app => app.job_id === job.job_id);
+        const postedDate = job.posted_date ? new Date(job.posted_date).toLocaleDateString() : 'Recently';
+        
+        return `
+            <div class="job-card">
+                <h3>${job.job_title || 'Job Title'}</h3>
+                <div><i class="fas fa-building"></i> ${job.company_name || 'Company'}</div>
+                <div><i class="fas fa-map-marker-alt"></i> ${job.location || 'Location'}</div>
+                <div><i class="fas fa-clock"></i> Posted ${postedDate}</div>
+                ${job.job_description ? `<p>${job.job_description.substring(0, 150)}...</p>` : ''}
+                <div class="job-actions">
+                    ${isApplied ? 
+                        '<button class="btn-applied" disabled><i class="fas fa-check"></i> Applied</button>' :
+                        `<button class="btn-apply" onclick="applyForJob(${job.job_id})">
+                            <i class="fas fa-paper-plane"></i> Apply Now
+                        </button>`
+                    }
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
 function filterJobs() {
-    const typeFilter = document.getElementById('jobTypeFilter').value;
-    const searchTerm = document.getElementById('searchJobs').value.toLowerCase();
+    const typeFilter = document.getElementById('jobTypeFilter')?.value || '';
+    const searchTerm = document.getElementById('searchJobs')?.value.toLowerCase() || '';
     
     let filteredJobs = allJobs;
     
-    // Filter by job type
-    if (typeFilter && typeFilter !== '') {
+    if (typeFilter) {
         filteredJobs = filteredJobs.filter(job => 
-            job.employment_type && job.employment_type.toLowerCase() === typeFilter.toLowerCase()
+            job.employment_type && job.employment_type.toLowerCase().includes(typeFilter.toLowerCase())
         );
     }
     
-    // Filter by search term
     if (searchTerm) {
         filteredJobs = filteredJobs.filter(job => 
             (job.job_title && job.job_title.toLowerCase().includes(searchTerm)) ||
@@ -920,333 +1052,240 @@ function searchJobs() {
     filterJobs();
 }
 
+async function applyForJob(jobId) {
+    const job = allJobs.find(j => j.job_id === jobId);
+    if (!job) {
+        alert('Job not found');
+        return;
+    }
+    
+    const alreadyApplied = allApplications.some(app => app.job_id === jobId);
+    if (alreadyApplied) {
+        alert('You have already applied for this position!');
+        return;
+    }
+    
+    if (!confirm(`Apply for "${job.job_title}"?`)) {
+        return;
+    }
+    
+    const applicationData = {
+        user_id: currentUser.userid,
+        job_id: jobId,
+        application_date: new Date().toISOString().split('T')[0],
+        status: 'Applied'
+    };
+    
+    try {
+        const response = await fetch(`${API_URL}/applications`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(applicationData)
+        });
+        
+        if (response.ok) {
+            alert('Application submitted successfully!');
+            await loadApplications();
+            displayJobs(allJobs);
+            showSection('applications');
+        } else {
+            alert('Failed to submit application');
+        }
+    } catch (error) {
+        console.error('Error applying for job:', error);
+    }
+}
 
-// ==================== COMPANIES (JOB SEEKER VIEW) ====================
+// ==================== COMPANIES ====================
 async function loadCompanies() {
-  try {
-    const response = await fetch(`${API_URL}/companies`);
-    allCompanies = await response.json();
-    displayCompanies(allCompanies);
-  } catch (error) {
-    console.error('Error loading companies:', error);
-    document.getElementById('companiesList').innerHTML = 
-      '<p style="grid-column: 1/-1; text-align: center; color: red;">Error loading companies</p>';
-  }
+    try {
+        const response = await fetch(`${API_URL}/companies`);
+        if (!response.ok) throw new Error(`Companies fetch failed`);
+        
+        allCompanies = await response.json();
+        displayCompanies(allCompanies);
+    } catch (error) {
+        console.error('Error loading companies:', error);
+        const listEl = document.getElementById('companiesList');
+        if (listEl) {
+            listEl.innerHTML = '<p style="color: #6b7280;">Failed to load companies.</p>';
+        }
+    }
 }
 
 function displayCompanies(companies) {
-  const listEl = document.getElementById('companiesList');
-  
-  if (companies.length === 0) {
-    listEl.innerHTML = `
-      <div class="empty-state">
-        <i class="fas fa-building"></i>
-        <h3>No companies registered yet</h3>
-        <p>Companies will appear here as they join the platform</p>
-      </div>
-    `;
-    return;
-  }
-
-  listEl.innerHTML = companies.map(company => {
-    const industryClass = company.industry ? company.industry.toLowerCase() : 'default';
-    const companyInitial = company.company_name.substring(0, 1).toUpperCase();
+    const listEl = document.getElementById('companiesList');
+    if (!listEl) return;
     
-    return `
-      <div class="company-card">
-        <div class="company-card-banner ${industryClass}"></div>
-        <div class="company-logo-wrapper">
-          <div class="company-logo">${companyInitial}</div>
-        </div>
-        <div class="company-card-body">
-          <div class="company-card-header">
-            <h3 class="company-card-name">${company.company_name}</h3>
-            ${company.industry ? `<span class="company-card-industry">${company.industry}</span>` : ''}
-          </div>
-
-          <div class="company-card-meta">
-            ${company.location ? `
-              <div class="company-meta-item">
-                <i class="fas fa-map-marker-alt"></i>
-                <span>${company.location}</span>
-              </div>
-            ` : ''}
-            ${company.no_of_employees ? `
-              <div class="company-meta-item">
-                <i class="fas fa-users"></i>
-                <span>${company.no_of_employees} employees</span>
-              </div>
-            ` : ''}
-          </div>
-
-          ${company.description ? `
-            <p class="company-card-description">${company.description}</p>
-          ` : ''}
-
-          <div class="company-card-stats">
-            <div class="company-stat">
-              <span class="company-stat-number" id="jobCount-${company.company_id}">0</span>
-              <span class="company-stat-label">Open Jobs</span>
+    if (!companies || companies.length === 0) {
+        listEl.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-building" style="font-size: 64px; color: #6b7280;"></i>
+                <h3>No companies yet</h3>
             </div>
-            <div class="company-stat">
-              <span class="company-stat-number">${company.is_verified ? '✓' : '—'}</span>
-              <span class="company-stat-label">Verified</span>
-            </div>
-          </div>
-
-          <div class="company-card-footer">
-            <button class="btn-view-company" onclick="viewCompanyJobs(${company.company_id}, '${company.company_name.replace(/'/g, "\\'")}')">
-              <i class="fas fa-briefcase"></i>
-              View Jobs
-            </button>
-            ${company.website ? `
-              <a href="${company.website}" target="_blank" class="btn-company-website">
-                <i class="fas fa-external-link-alt"></i>
-                Website
-              </a>
-            ` : ''}
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  // Load job counts for each company
-  companies.forEach(company => {
-    loadCompanyJobCount(company.company_id);
-  });
-}
-
-async function loadCompanyJobCount(companyId) {
-  try {
-    const response = await fetch(`${API_URL}/jobs/company/${companyId}`);
-    const jobs = await response.json();
-    const countEl = document.getElementById(`jobCount-${companyId}`);
-    if (countEl) {
-      countEl.textContent = jobs.length;
+        `;
+        return;
     }
-  } catch (error) {
-    console.error('Error loading job count:', error);
-  }
-}
-
-function viewCompanyJobs(companyId, companyName) {
-  showSection('jobs');
-  // Filter jobs by company
-  const companyJobs = allJobs.filter(job => job.company_id === companyId);
-  displayJobs(companyJobs);
-  
-  // Update header to show we're filtering
-  document.querySelector('#jobsSection .section-header h1').textContent = `Jobs at ${companyName}`;
+    
+    listEl.innerHTML = companies.map(company => `
+        <div class="company-card">
+            <h3>${company.company_name || 'Company Name'}</h3>
+            ${company.website ? `<p><i class="fas fa-globe"></i> <a href="${company.website}" target="_blank" rel="noopener noreferrer">${company.website}</a></p>` : ''}
+            ${company.industry ? `<p><i class="fas fa-industry"></i> ${company.industry}</p>` : ''}
+            ${company.location ? `<p><i class="fas fa-map-marker-alt"></i> ${company.location}</p>` : ''}
+            ${company.description ? `<p>${company.description.substring(0, 100)}...</p>` : ''}
+        </div>
+    `).join('');
 }
 
 function searchCompanies() {
-  const query = document.getElementById('searchCompanies').value.toLowerCase();
-  const filtered = allCompanies.filter(company => 
-    company.company_name.toLowerCase().includes(query) ||
-    (company.industry && company.industry.toLowerCase().includes(query)) ||
-    (company.location && company.location.toLowerCase().includes(query))
-  );
-  displayCompanies(filtered);
-}
-
-
-function searchCompanies() {
-  const query = document.getElementById('searchCompanies').value.toLowerCase();
-  const filtered = allCompanies.filter(company => 
-    company.company_name.toLowerCase().includes(query) ||
-    (company.industry && company.industry.toLowerCase().includes(query))
-  );
-  displayCompanies(filtered);
+    const query = document.getElementById('searchCompanies')?.value.toLowerCase() || '';
+    const filtered = allCompanies.filter(company => 
+        (company.company_name && company.company_name.toLowerCase().includes(query)) ||
+        (company.industry && company.industry.toLowerCase().includes(query))
+    );
+    displayCompanies(filtered);
 }
 
 // ==================== CONTACTS ====================
 async function loadContacts() {
-  try {
-    const response = await fetch(`${API_URL}/contacts`);
-    allContacts = await response.json();
-    displayContacts(allContacts);
-  } catch (error) {
-    console.error('Error loading contacts:', error);
-    document.getElementById('contactsList').innerHTML = 
-      '<p style="grid-column: 1/-1; text-align: center; color: red;">Error loading contacts</p>';
-  }
+    try {
+        const response = await fetch(`${API_URL}/contacts`);
+        if (!response.ok) throw new Error(`Contacts fetch failed`);
+        
+        allContacts = await response.json();
+        displayContacts(allContacts);
+    } catch (error) {
+        console.error('Error loading contacts:', error);
+        const listEl = document.getElementById('contactsList');
+        if (listEl) {
+            listEl.innerHTML = '<p style="color: #6b7280;">Failed to load contacts.</p>';
+        }
+    }
 }
 
 function displayContacts(contacts) {
-  const listEl = document.getElementById('contactsList');
-  
-  if (contacts.length === 0) {
-    listEl.innerHTML = `
-      <div class="empty-state">
-        <i class="fas fa-address-book"></i>
-        <h3>No contacts available yet</h3>
-        <p>Company contacts will appear here when employers add them</p>
-      </div>
-    `;
-    return;
-  }
-
-  listEl.innerHTML = contacts.map(contact => {
-    const contactInitials = contact.contact_name.split(' ').map(n => n[0]).join('').toUpperCase();
+    const listEl = document.getElementById('contactsList');
+    if (!listEl) return;
     
-    return `
-      <div class="company-card">
-        <div class="company-card-banner tech"></div>
-        <div class="company-logo-wrapper">
-          <div class="company-logo">${contactInitials}</div>
-        </div>
-        <div class="company-card-body">
-          <div class="company-card-header">
-            <h3 class="company-card-name">${contact.contact_name}</h3>
-            <span class="company-card-industry">${contact.job_title}</span>
-          </div>
-
-          <div class="company-card-meta">
-            <div class="company-meta-item">
-              <i class="fas fa-building"></i>
-              <span>${contact.company_name}</span>
+    if (!contacts || contacts.length === 0) {
+        listEl.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-address-book" style="font-size: 64px; color: #6b7280;"></i>
+                <h3>No contacts available</h3>
             </div>
-          </div>
-
-          <div class="company-card-meta" style="margin-top: 12px;">
-            <div class="company-meta-item">
-              <i class="fas fa-envelope"></i>
-              <a href="mailto:${contact.email}" style="color: #1a73e8; text-decoration: none;">${contact.email}</a>
-            </div>
-            ${contact.phone ? `
-              <div class="company-meta-item">
-                <i class="fas fa-phone"></i>
-                <a href="tel:${contact.phone}" style="color: #1a73e8; text-decoration: none;">${contact.phone}</a>
-              </div>
-            ` : ''}
-          </div>
-
-          <div class="company-card-footer" style="margin-top: 20px;">
-            <a href="mailto:${contact.email}" class="btn-view-company">
-              <i class="fas fa-envelope"></i>
-              Send Email
-            </a>
-            ${contact.phone ? `
-              <a href="tel:${contact.phone}" class="btn-company-website">
-                <i class="fas fa-phone"></i>
-                Call
-              </a>
-            ` : ''}
-          </div>
+        `;
+        return;
+    }
+    
+    listEl.innerHTML = contacts.map(contact => `
+        <div class="contact-card">
+            <h4>${contact.contactname || 'Contact Name'}</h4>
+            ${contact.job_title ? `<p>${contact.job_title}</p>` : ''}
+            ${contact.email ? `<p><i class="fas fa-envelope"></i> ${contact.email}</p>` : ''}
+            ${contact.phone ? `<p><i class="fas fa-phone"></i> ${contact.phone}</p>` : ''}
         </div>
-      </div>
-    `;
-  }).join('');
+    `).join('');
 }
-
 
 function searchContacts() {
-  const query = document.getElementById('searchContacts').value.toLowerCase();
-  const filtered = allContacts.filter(contact => 
-    contact.contact_name.toLowerCase().includes(query) ||
-    contact.company_name.toLowerCase().includes(query) ||
-    (contact.job_title && contact.job_title.toLowerCase().includes(query))
-  );
-  displayContacts(filtered);
+    const query = document.getElementById('searchContacts')?.value.toLowerCase() || '';
+    const filtered = allContacts.filter(contact => 
+        (contact.contact_name && contact.contact_name.toLowerCase().includes(query)) ||
+        (contact.email && contact.email.toLowerCase().includes(query))
+    );
+    displayContacts(filtered);
 }
-
-// REMOVED: Contact creation/deletion for job seekers
-
-// ==================== PROFILE ====================
-async function loadProfile() {
-  document.getElementById('profileFullName').value = currentUser.full_name;
-  document.getElementById('profileEmail').value = currentUser.email;
-  document.getElementById('profilePhone').value = currentUser.phone || '';
-  document.getElementById('profileLocation').value = currentUser.location || '';
-  document.getElementById('profileSex').value = currentUser.sex || '';
-
-  // Load profile statistics
-        const statsResponse = await fetch(`${API_URL}/applications/user/${currentUser.user_id}`);
-        const applications = await statsResponse.json();
-        
-        document.getElementById('profileTotalApps').textContent = applications.length;
-        document.getElementById('profileInReview').textContent = applications.filter(a => a.status === 'In Review').length;
-        document.getElementById('profileInterviews').textContent = applications.filter(a => a.status === 'Interview').length;
-        document.getElementById('profileOffers').textContent = applications.filter(a => a.status === 'Offer').length;
-        
-
-}
-
-document.getElementById('profileForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const profileData = {
-    full_name: document.getElementById('profileFullName').value,
-    phone: document.getElementById('profilePhone').value,
-    location: document.getElementById('profileLocation').value,
-    sex: document.getElementById('profileSex').value
-  };
-
-  try {
-    const response = await fetch(`${API_URL}/users/${currentUser.user_id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(profileData)
-    });
-
-    if (response.ok) {
-      alert('Profile updated successfully!');
-      currentUser = { ...currentUser, ...profileData };
-      localStorage.setItem('user', JSON.stringify(currentUser));
-      initializeDashboard();
-    } else {
-      const data = await response.json();
-      alert(data.error || 'Failed to update profile');
-    }
-  } catch (error) {
-    alert('Connection error. Please try again.');
-  }
-});
 
 // ==================== STATISTICS ====================
 async function calculateStatistics() {
-    try {
-        const response = await fetch(`${API_URL}/applications/user/${currentUser.user_id}`);
-        const applications = await response.json();
-        
-        if (document.getElementById('profileTotalApps')) {
-            document.getElementById('profileTotalApps').textContent = applications.length;
-        }
-        if (document.getElementById('profileInReview')) {
-            document.getElementById('profileInReview').textContent = applications.filter(a => a.status === 'In Review').length;
-        }
-        if (document.getElementById('profileInterviews')) {
-            document.getElementById('profileInterviews').textContent = applications.filter(a => a.status === 'Interview').length;
-        }
-        if (document.getElementById('profileOffers')) {
-            document.getElementById('profileOffers').textContent = applications.filter(a => a.status === 'Offer').length;
-        }
-    } catch (error) {
-        console.error('Error calculating statistics:', error);
+    if (!allApplications || allApplications.length === 0) {
+        updateStatsDisplay(0, 0, 0, 0);
+        return;
     }
+    
+    const total = allApplications.length;
+    const thisMonth = allApplications.filter(app => {
+        const appDate = new Date(app.application_date);
+        const now = new Date();
+        return appDate.getMonth() === now.getMonth() && appDate.getFullYear() === now.getFullYear();
+    }).length;
+    
+    const offers = allApplications.filter(a => a.status === 'Offer').length;
+    const successRate = total > 0 ? ((offers / total) * 100).toFixed(1) : 0;
+    
+    updateStatsDisplay(total, thisMonth, successRate, 0);
+}
+
+function updateStatsDisplay(total, thisMonth, successRate, avgResponse) {
+    const stats = {
+        statTotalApps: total,
+        statThisMonth: thisMonth,
+        statSuccessRate: `${successRate}%`,
+        statAvgResponse: avgResponse ? `${avgResponse} days` : '-- days'
+    };
+    
+    Object.keys(stats).forEach(key => {
+        const el = document.getElementById(key);
+        if (el) el.textContent = stats[key];
+    });
 }
 
 async function loadStatistics() {
-    try {
-        const response = await fetch(`${API_URL}/applications/user/${currentUser.user_id}`);
-        const applications = await response.json();
-        
-        const total = applications.length;
-        const thisMonth = applications.filter(app => {
-            const appDate = new Date(app.application_date);
-            const now = new Date();
-            return appDate.getMonth() === now.getMonth() && appDate.getFullYear() === now.getFullYear();
-        }).length;
-        
-        const successRate = total > 0 ? ((applications.filter(a => a.status === 'Offer').length / total) * 100).toFixed(0) : 0;
-        
-        if (document.getElementById('statTotalApps')) {
-            document.getElementById('statTotalApps').textContent = total;
-            document.getElementById('statThisMonth').textContent = thisMonth;
-            document.getElementById('statSuccessRate').textContent = `${successRate}%`;
-        }
-    } catch (error) {
-        console.error('Error loading statistics:', error);
+    await calculateStatistics();
+}
+
+// ==================== UTILITY FUNCTIONS ====================
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
     }
 }
+
+function toggleUserDropdown() {
+    const dropdown = document.getElementById('userDropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('active');
+    }
+}
+
+function logout() {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        window.location.href = '/';
+}
+
+function toggleTheme() {
+    document.body.classList.toggle('dark-mode');
+}
+
+function showHelp() {
+    alert('Help & Support\n\nContact: support@jobtracker.com');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.user-menu')) {
+        const dropdown = document.getElementById('userDropdown');
+        if (dropdown) dropdown.classList.remove('active');
+    }
+});
+
+// Modal backdrop click to close
+window.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal')) {
+        e.target.classList.remove('active');
+    }
+});
+
+// Keyboard support
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal.active').forEach(modal => modal.classList.remove('active'));
+        const dropdown = document.getElementById('userDropdown');
+        if (dropdown) dropdown.classList.remove('active');
+    }
+});
+
+console.log('=== DASHBOARD JS LOADED ===');

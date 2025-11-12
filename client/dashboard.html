@@ -27,6 +27,9 @@
                     <a href="#" onclick="showSection('profile')">
                         <i class="fas fa-user"></i> Profile
                     </a>
+                    <a href="#" onclick="showSection('settings')">
+                        <i class="fas fa-cog"></i> Settings
+                    </a>
                     <a href="#" onclick="logout()">
                         <i class="fas fa-sign-out-alt"></i> Logout
                     </a>
@@ -40,7 +43,7 @@
         <div class="sidebar-header">
             <div class="user-avatar large" id="sidebarUserInitial">JS</div>
             <h3 id="sidebarUserName">Job Seeker</h3>
-            <p id="userEmail">email@example.com</p>
+            <p id="sidebarUserEmail">email@example.com</p>
         </div>
         <nav class="sidebar-nav">
             <a href="#" class="nav-item active" data-section="profile" onclick="showSection('profile')">
@@ -69,7 +72,7 @@
             </a>
         </nav>
         <div class="sidebar-footer">
-            <a href="#">
+            <a href="#" onclick="showHelp()">
                 <i class="fas fa-question-circle"></i> Help
             </a>
             <a href="#" onclick="logout()">
@@ -80,32 +83,191 @@
 
     <!-- Main Content -->
     <main class="main-content">
+        <!-- Profile Section -->
+        <section id="profileSection" class="content-section active">
+            <div class="section-header">
+                <h1><i class="fas fa-user"></i> My Profile</h1>
+                <div class="section-actions">
+                    <button class="btn-primary" onclick="showSkillsModal()">
+                        <i class="fas fa-plus"></i> Add Skill
+                    </button>
+                    <button class="btn-secondary" onclick="showEducationModal()">
+                        <i class="fas fa-graduation-cap"></i> Add Education
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="profileLoading" class="loading-container">
+                <div class="loading-spinner"></div>
+                <p>Loading profile...</p>
+            </div>
+
+            <!-- Profile Content -->
+            <div id="profileContent" class="profile-content">
+                <!-- Personal Information Card -->
+                <div class="profile-card">
+                    <h3><i class="fas fa-info-circle"></i> Personal Information</h3>
+                    <form id="profileForm" onsubmit="updateProfile(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Full Name *</label>
+                                <input type="text" id="profileFullName" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Email *</label>
+                                <input type="email" id="profileEmail" required disabled>
+                            </div>
+                            <div class="form-group">
+                                <label>Phone</label>
+                                <input type="tel" id="profilePhone">
+                            </div>
+                            <div class="form-group">
+                                <label>Location</label>
+                                <input type="text" id="profileLocation">
+                            </div>
+                            <div class="form-group">
+                                <label>Gender</label>
+                                <select id="profileSex">
+                                    <option value="">Select</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary">Update Profile</button>
+                    </form>
+                </div>
+
+                <!-- Skills Section -->
+                <div class="profile-card">
+                    <div class="section-header-small">
+                        <h3><i class="fas fa-code"></i> Skills & Expertise</h3>
+                        <button class="btn-primary btn-small" onclick="showSkillsModal()">
+                            <i class="fas fa-plus"></i> Add Skill
+                        </button>
+                    </div>
+                    <div id="skillsList" class="profile-section-list">
+                        <div class="empty-state">
+                            <i class="fas fa-code" style="font-size: 48px; color: #6b7280;"></i>
+                            <h4>No skills added yet</h4>
+                            <p>Add your professional skills to improve job matching</p>
+                            <button class="btn-primary btn-small" onclick="showSkillsModal()">Add Your First Skill</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Education Section -->
+                <div class="profile-card">
+                    <div class="section-header-small">
+                        <h3><i class="fas fa-graduation-cap"></i> Education</h3>
+                        <button class="btn-primary btn-small" onclick="showEducationModal()">
+                            <i class="fas fa-plus"></i> Add Education
+                        </button>
+                    </div>
+                    <div id="educationList" class="profile-section-list">
+                        <div class="empty-state">
+                            <i class="fas fa-graduation-cap" style="font-size: 48px; color: #6b7280;"></i>
+                            <h4>No education history</h4>
+                            <p>Add your educational background</p>
+                            <button class="btn-primary btn-small" onclick="showEducationModal()">Add Education</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Certifications Section -->
+                <div class="profile-card">
+                    <div class="section-header-small">
+                        <h3><i class="fas fa-certificate"></i> Certifications</h3>
+                        <button class="btn-primary btn-small" onclick="showCertificationModal()">
+                            <i class="fas fa-plus"></i> Add Certification
+                        </button>
+                    </div>
+                    <div id="certificationsList" class="profile-section-list">
+                        <div class="empty-state">
+                            <i class="fas fa-certificate" style="font-size: 48px; color: #6b7280;"></i>
+                            <h4>No certifications</h4>
+                            <p>Add your professional certifications</p>
+                            <button class="btn-primary btn-small" onclick="showCertificationModal()">Add Certification</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Languages Section -->
+                <div class="profile-card">
+                    <div class="section-header-small">
+                        <h3><i class="fas fa-globe"></i> Languages</h3>
+                        <button class="btn-primary btn-small" onclick="showLanguageModal()">
+                            <i class="fas fa-plus"></i> Add Language
+                        </button>
+                    </div>
+                    <div id="languagesList" class="profile-section-list">
+                        <div class="empty-state">
+                            <i class="fas fa-globe" style="font-size: 48px; color: #6b7280;"></i>
+                            <h4>No languages added</h4>
+                            <p>Add languages you speak</p>
+                            <button class="btn-primary btn-small" onclick="showLanguageModal()">Add Language</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile Statistics -->
+                <div class="profile-card">
+                    <h3><i class="fas fa-chart-bar"></i> Application Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <i class="fas fa-file-alt stat-icon"></i>
+                            <div>
+                                <h2 id="profileTotalApps">0</h2>
+                                <p>Total Applications</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-clock stat-icon"></i>
+                            <div>
+                                <h2 id="profileInReview">0</h2>
+                                <p>In Review</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-microphone stat-icon"></i>
+                            <div>
+                                <h2 id="profileInterviews">0</h2>
+                                <p>Interviews Scheduled</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-trophy stat-icon"></i>
+                            <div>
+                                <h2 id="profileOffers">0</h2>
+                                <p>Job Offers</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Jobs Section -->
         <section id="jobsSection" class="content-section">
             <div class="section-header">
                 <h1><i class="fas fa-briefcase"></i> Browse Jobs</h1>
             </div>
-            
-            <!-- Updated Filters Bar -->
-            <div class="filters-bar-modern">
+            <div class="filters-bar">
                 <select id="jobTypeFilter" class="filter-select" onchange="filterJobs()">
-                    <option value="">All Types</option>
+                    <option value="">All Job Types</option>
                     <option value="Full-time">Full-time</option>
                     <option value="Part-time">Part-time</option>
                     <option value="Contract">Contract</option>
                     <option value="Internship">Internship</option>
                     <option value="Remote">Remote</option>
                 </select>
-                
-                <input 
-                    type="text" 
-                    id="searchJobs" 
-                    class="search-input-modern" 
-                    placeholder="Search jobs by title, company, or location..." 
-                    onkeyup="searchJobs()"
-                />
+                <input type="text" id="searchJobs" class="search-input" placeholder="Search jobs by title, company, or location..." onkeyup="searchJobs()">
+                <button class="btn-primary" onclick="loadJobs()">
+                    <i class="fas fa-refresh"></i> Refresh
+                </button>
             </div>
-            
             <div id="jobsList" class="data-grid"></div>
         </section>
 
@@ -113,109 +275,47 @@
         <section id="applicationsSection" class="content-section">
             <div class="section-header">
                 <h1><i class="fas fa-file-alt"></i> My Applications</h1>
+                <button class="btn-primary" onclick="showAddApplicationModal()">
+                    <i class="fas fa-plus"></i> Track Application
+                </button>
+            </div>
+            <div class="filters-bar">
+                <select id="statusFilter" class="filter-select" onchange="filterApplications()">
+                    <option value="">All Statuses</option>
+                    <option value="Applied">Applied</option>
+                    <option value="In Review">In Review</option>
+                    <option value="Interview">Interview</option>
+                    <option value="Offer">Offer</option>
+                    <option value="Rejected">Rejected</option>
+                </select>
+                <input type="text" id="searchApplications" class="search-input" placeholder="Search applications..." onkeyup="searchApplications()">
             </div>
             <div id="applicationsList" class="data-grid"></div>
         </section>
 
-        <!-- Other sections remain the same -->
-        <section id="profileSection" class="content-section active">
-            <div class="section-header">
-                <h1><i class="fas fa-user"></i> My Profile</h1>
-            </div>
-            <!-- Profile content here -->
-            <div class="profile-card">
-                <h3>Personal Information</h3>
-                <form id="profileForm" onsubmit="updateProfile(event)">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Full Name</label>
-                            <input type="text" id="profileFullName" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Email</label>
-                            <input type="email" id="profileEmail" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Phone</label>
-                            <input type="tel" id="profilePhone">
-                        </div>
-                        <div class="form-group">
-                            <label>Location</label>
-                            <input type="text" id="profileLocation">
-                        </div>
-                        <div class="form-group">
-                            <label>Sex</label>
-                            <select id="profileSex">
-                                <option value="">Select</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn-primary">Update Profile</button>
-                </form>
-            </div>
-            <!-- Education Section -->
-            <div class="profile-card">
-                <div class="section-header">
-                    <h3><i class="fas fa-graduation-cap"></i> Education</h3>
-                    <button class="btn-primary" onclick="showEducationModal()">
-                        <i class="fas fa-plus"></i> Add Education
-                    </button>
-                </div>
-                <div id="educationList" class="profile-items-list"></div>
-            </div>
-
-            <!-- Skills Section -->
-            <div class="profile-card">
-                <div class="section-header">
-                    <h3><i class="fas fa-code"></i> Skills</h3>
-                    <button class="btn-primary" onclick="showSkillsModal()">
-                        <i class="fas fa-plus"></i> Add Skill
-                    </button>
-                </div>
-                <div id="skillsList" class="skills-container"></div>
-            </div>
-
-            <!-- Certifications Section -->
-            <div class="profile-card">
-                <div class="section-header">
-                    <h3><i class="fas fa-certificate"></i> Certifications & Licenses</h3>
-                    <button class="btn-primary" onclick="showCertificationModal()">
-                        <i class="fas fa-plus"></i> Add Certification
-                    </button>
-                </div>
-                <div id="certificationsList" class="profile-items-list"></div>
-            </div>
-
-            <!-- Languages Section -->
-            <div class="profile-card">
-                <div class="section-header">
-                    <h3><i class="fas fa-language"></i> Languages</h3>
-                    <button class="btn-primary" onclick="showLanguageModal()">
-                        <i class="fas fa-plus"></i> Add Language
-                    </button>
-                </div>
-                <div id="languagesList" class="skills-container"></div>
-            </div>
-        </section>
-
-        <!-- Add other sections (Companies, Contacts, Statistics) -->
+        <!-- Companies Section -->
         <section id="companiesSection" class="content-section">
             <div class="section-header">
                 <h1><i class="fas fa-building"></i> Companies</h1>
             </div>
+            <div class="filters-bar">
+                <input type="text" id="searchCompanies" class="search-input" placeholder="Search companies..." onkeyup="searchCompanies()">
+            </div>
             <div id="companiesList" class="data-grid"></div>
         </section>
 
+        <!-- Contacts Section -->
         <section id="contactsSection" class="content-section">
             <div class="section-header">
                 <h1><i class="fas fa-address-book"></i> Professional Contacts</h1>
             </div>
+            <div class="filters-bar">
+                <input type="text" id="searchContacts" class="search-input" placeholder="Search contacts..." onkeyup="searchContacts()">
+            </div>
             <div id="contactsList" class="data-grid"></div>
         </section>
 
+        <!-- Statistics Section -->
         <section id="statisticsSection" class="content-section">
             <div class="section-header">
                 <h1><i class="fas fa-chart-bar"></i> Statistics & Insights</h1>
@@ -250,161 +350,43 @@
                     </div>
                 </div>
             </div>
-            <div class="profile-card">
+            <div id="statusBreakdown" class="profile-card">
                 <h3>Application Status Breakdown</h3>
-                <div id="statusBreakdown"></div>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-icon applied"></div>
+                        <div>Applied - <span id="statusApplied">0</span></div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-icon in-review"></div>
+                        <div>In Review - <span id="statusInReview">0</span></div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-icon interview"></div>
+                        <div>Interview - <span id="statusInterview">0</span></div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-icon offer"></div>
+                        <div>Offer - <span id="statusOffer">0</span></div>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
 
     <!-- Modals -->
-    <!-- Application Modal -->
-    <div id="applicationModal" class="modal">
-        <div class="modal-content">
-            <form id="applicationForm" onsubmit="saveApplication(event)">
-                <div class="form-group">
-                    <label>Job</label>
-                    <select id="applicationJobId" required></select>
-                </div>
-                <div class="form-group">
-                    <label>Application Date</label>
-                    <input type="date" id="applicationDate" required>
-                </div>
-                <div class="form-group">
-                    <label>Status</label>
-                    <select id="applicationStatus" required>
-                        <option value="Applied">Applied</option>
-                        <option value="In Review">In Review</option>
-                        <option value="Interview">Interview</option>
-                        <option value="Offer">Offer</option>
-                        <option value="Rejected">Rejected</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Notes</label>
-                    <textarea id="applicationNotes" rows="4"></textarea>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary" onclick="closeModal('applicationModal')">Cancel</button>
-                    <button type="submit" class="btn-primary">Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Add other modals (Job, Company, etc.) -->
-    <div id="jobModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Add Job</h2>
-                <button class="close-modal" onclick="closeModal('jobModal')">×</button>
-            </div>
-            <form id="jobForm" onsubmit="saveJob(event)">
-                <div class="form-group">
-                    <label>Job Title</label>
-                    <input type="text" id="jobTitle" required>
-                </div>
-                <div class="form-group">
-                    <label>Company</label>
-                    <select id="jobCompanyId" required></select>
-                </div>
-                <div class="form-group">
-                    <label>Location</label>
-                    <input type="text" id="jobLocation">
-                </div>
-                <div class="form-group">
-                    <label>Job Type</label>
-                    <select id="jobType">
-                        <option value="Full-time">Full-time</option>
-                        <option value="Part-time">Part-time</option>
-                        <option value="Contract">Contract</option>
-                        <option value="Internship">Internship</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Salary Range</label>
-                    <input type="text" id="jobSalary" placeholder="e.g., 60k - 80k">
-                </div>
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea id="jobDescription" rows="4"></textarea>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary" onclick="closeModal('jobModal')">Cancel</button>
-                    <button type="submit" class="btn-primary">Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Education Modal -->
-    <div id="educationModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Add Education</h2>
-                <button class="close-modal" onclick="closeModal('educationModal')">&times;</button>
-            </div>
-            <form id="educationForm" onsubmit="saveEducation(event)">
-                <input type="hidden" id="education-id">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>School/University Name *</label>
-                        <input type="text" id="school-name" required>
-                    </div>
-                    <div class="form-group">
-                        <label>School Location</label>
-                        <input type="text" id="school-location">
-                    </div>
-                    <div class="form-group">
-                        <label>Degree *</label>
-                        <input type="text" id="degree" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Field of Study</label>
-                        <input type="text" id="field-of-study">
-                    </div>
-                    <div class="form-group">
-                        <label>Start Date *</label>
-                        <input type="date" id="edu-start-date" required>
-                    </div>
-                    <div class="form-group">
-                        <label>End Date</label>
-                        <input type="date" id="edu-end-date">
-                    </div>
-                    <div class="form-group">
-                        <label>GPA (out of 10)</label>
-                        <input type="number" step="0.01" min="0" max="10" id="gpa" placeholder="e.g., 8.5">
-                    </div>
-                    <div class="form-group">
-                        <label style="display: flex; align-items: center; gap: 8px;">
-                            <input type="checkbox" id="currently-studying" style="width: auto;">
-                            Currently Studying
-                        </label>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Honors & Awards</label>
-                    <textarea id="honors-awards" rows="3"></textarea>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary" onclick="closeModal('educationModal')">Cancel</button>
-                    <button type="submit" class="btn-primary">Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- Skills Modal -->
     <div id="skillsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Add Skill</h2>
+                <h2><i class="fas fa-code"></i> Add Skill</h2>
                 <button class="close-modal" onclick="closeModal('skillsModal')">&times;</button>
             </div>
             <form id="skillsForm" onsubmit="saveSkill(event)">
+                <input type="hidden" id="skill-id" value="">
                 <div class="form-group">
                     <label>Skill Name *</label>
-                    <input type="text" id="skill-name" required>
+                    <input type="text" id="skill-name" required placeholder="e.g., JavaScript, Python">
                 </div>
                 <div class="form-group">
                     <label>Proficiency Level *</label>
@@ -418,53 +400,112 @@
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" onclick="closeModal('skillsModal')">Cancel</button>
-                    <button type="submit" class="btn-primary">Save</button>
+                    <button type="submit" class="btn-primary">Save Skill</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Certification Modal (UPDATED - No certificate_number and expiry_date) -->
-    <div id="certificationModal" class="modal">
+    <!-- Education Modal -->
+    <div id="educationModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Add Certification</h2>
-                <button class="close-modal" onclick="closeModal('certificationModal')">&times;</button>
+                <h2><i class="fas fa-graduation-cap"></i> Add Education</h2>
+                <button class="close-modal" onclick="closeModal('educationModal')">&times;</button>
             </div>
-            <form id="certificationForm" onsubmit="saveCertification(event)">
+            <form id="educationForm" onsubmit="saveEducation(event)">
+                <input type="hidden" id="education-id" value="">
                 <div class="form-grid">
                     <div class="form-group">
-                        <label>Certification Name *</label>
-                        <input type="text" id="cert-name" required>
+                        <label>School/University *</label>
+                        <input type="text" id="school-name" required placeholder="e.g., University of XYZ">
                     </div>
                     <div class="form-group">
-                        <label>Issuing Authority</label>
-                        <input type="text" id="issuing-authority">
+                        <label>Location</label>
+                        <input type="text" id="school-location" placeholder="City, State">
                     </div>
                     <div class="form-group">
-                        <label>Issue Date</label>
-                        <input type="date" id="issue-date">
+                        <label>Degree *</label>
+                        <input type="text" id="degree" required placeholder="e.g., Bachelor of Science">
+                    </div>
+                    <div class="form-group">
+                        <label>Field of Study</label>
+                        <input type="text" id="field-of-study" placeholder="e.g., Computer Science">
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Start Date *</label>
+                        <input type="month" id="edu-start-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>End Date</label>
+                        <input type="month" id="edu-end-date">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="currently-studying">
+                            <label for="currently-studying">Currently Studying</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>GPA (Optional)</label>
+                        <input type="text" id="gpa" placeholder="e.g., 3.8/4.0">
+                    </div>
+                    <div class="form-group">
+                        <label>Honors/Awards</label>
+                        <textarea id="honors-awards" placeholder="Dean’s List, Scholarships, etc."></textarea>
                     </div>
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="btn-secondary" onclick="closeModal('certificationModal')">Cancel</button>
-                    <button type="submit" class="btn-primary">Save</button>
+                    <button type="button" class="btn-secondary" onclick="closeModal('educationModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Education</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Language Modal -->
+    <!-- Certifications Modal -->
+    <div id="certificationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-certificate"></i> Add Certification</h2>
+                <button class="close-modal" onclick="closeModal('certificationModal')">&times;</button>
+            </div>
+            <form id="certificationForm" onsubmit="saveCertification(event)">
+                <input type="hidden" id="certification-id" value="">
+                <div class="form-group">
+                    <label>Certification Name *</label>
+                    <input type="text" id="cert-name" required placeholder="e.g., AWS Certified Developer">
+                </div>
+                <div class="form-group">
+                    <label>Issuing Authority *</label>
+                    <input type="text" id="issuing-authority" required placeholder="e.g., Amazon Web Services">
+                </div>
+                <div class="form-group">
+                    <label>Issue Date</label>
+                    <input type="month" id="issue-date">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('certificationModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Certification</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Languages Modal -->
     <div id="languageModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Add Language</h2>
+                <h2><i class="fas fa-globe"></i> Add Language</h2>
                 <button class="close-modal" onclick="closeModal('languageModal')">&times;</button>
             </div>
             <form id="languageForm" onsubmit="saveLanguage(event)">
+                <input type="hidden" id="language-id" value="">
                 <div class="form-group">
-                    <label>Language *</label>
-                    <input type="text" id="language-name" required>
+                    <label>Language Name *</label>
+                    <input type="text" id="language-name" required placeholder="e.g., English, Spanish">
                 </div>
                 <div class="form-group">
                     <label>Proficiency Level *</label>
@@ -478,12 +519,54 @@
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" onclick="closeModal('languageModal')">Cancel</button>
-                    <button type="submit" class="btn-primary">Save</button>
+                    <button type="submit" class="btn-primary">Save Language</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Application Modal -->
+    <div id="applicationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-file-alt"></i> Track Application</h2>
+                <button class="close-modal" onclick="closeModal('applicationModal')">&times;</button>
+            </div>
+            <form id="applicationForm" onsubmit="saveApplication(event)">
+                <input type="hidden" id="application-id" value="">
+                <div class="form-group">
+                    <label>Job Title *</label>
+                    <input type="text" id="app-job-title" required placeholder="Job position">
+                </div>
+                <div class="form-group">
+                    <label>Company *</label>
+                    <input type="text" id="app-company" required placeholder="Company name">
+                </div>
+                <div class="form-group">
+                    <label>Application Date *</label>
+                    <input type="date" id="app-date" required>
+                </div>
+                <div class="form-group">
+                    <label>Status *</label>
+                    <select id="app-status" required>
+                        <option value="Applied">Applied</option>
+                        <option value="In Review">In Review</option>
+                        <option value="Interview">Interview</option>
+                        <option value="Offer">Offer</option>
+                        <option value="Rejected">Rejected</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="app-notes" rows="3" placeholder="Interview dates, follow-up actions, etc."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('applicationModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Application</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script src="dashboard.js"></script>
 </body>
