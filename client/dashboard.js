@@ -890,21 +890,36 @@ async function applyToJob(jobId, jobTitle) {
   }
 }
 
+// ==================== JOBS: FILTER & SEARCH ====================
 function filterJobs() {
-  const type = document.getElementById('employmentTypeFilter').value;
-  const filtered = type ? allJobs.filter(job => job.employment_type === type) : allJobs;
-  displayJobs(filtered);
+    const typeFilter = document.getElementById('jobTypeFilter').value;
+    const searchTerm = document.getElementById('searchJobs').value.toLowerCase();
+    
+    let filteredJobs = allJobs;
+    
+    // Filter by job type
+    if (typeFilter && typeFilter !== '') {
+        filteredJobs = filteredJobs.filter(job => 
+            job.employment_type && job.employment_type.toLowerCase() === typeFilter.toLowerCase()
+        );
+    }
+    
+    // Filter by search term
+    if (searchTerm) {
+        filteredJobs = filteredJobs.filter(job => 
+            (job.job_title && job.job_title.toLowerCase().includes(searchTerm)) ||
+            (job.company_name && job.company_name.toLowerCase().includes(searchTerm)) ||
+            (job.location && job.location.toLowerCase().includes(searchTerm))
+        );
+    }
+    
+    displayJobs(filteredJobs);
 }
 
 function searchJobs() {
-  const query = document.getElementById('searchJobs').value.toLowerCase();
-  const filtered = allJobs.filter(job => 
-    job.job_title.toLowerCase().includes(query) ||
-    job.company_name.toLowerCase().includes(query) ||
-    (job.location && job.location.toLowerCase().includes(query))
-  );
-  displayJobs(filtered);
+    filterJobs();
 }
+
 
 // ==================== COMPANIES (JOB SEEKER VIEW) ====================
 async function loadCompanies() {
@@ -1145,6 +1160,17 @@ async function loadProfile() {
   document.getElementById('profilePhone').value = currentUser.phone || '';
   document.getElementById('profileLocation').value = currentUser.location || '';
   document.getElementById('profileSex').value = currentUser.sex || '';
+
+  // Load profile statistics
+        const statsResponse = await fetch(`${API_URL}/applications/user/${currentUser.user_id}`);
+        const applications = await statsResponse.json();
+        
+        document.getElementById('profileTotalApps').textContent = applications.length;
+        document.getElementById('profileInReview').textContent = applications.filter(a => a.status === 'In Review').length;
+        document.getElementById('profileInterviews').textContent = applications.filter(a => a.status === 'Interview').length;
+        document.getElementById('profileOffers').textContent = applications.filter(a => a.status === 'Offer').length;
+        
+
 }
 
 document.getElementById('profileForm').addEventListener('submit', async (e) => {
@@ -1177,46 +1203,50 @@ document.getElementById('profileForm').addEventListener('submit', async (e) => {
     alert('Connection error. Please try again.');
   }
 });
+
 // ==================== STATISTICS ====================
 async function calculateStatistics() {
-  try {
-    const response = await fetch(`${API_URL}/applications/user/${currentUser.user_id}`);
-    const applications = await response.json();
-    
-    document.getElementById('totalApplications').textContent = applications.length;
-    document.getElementById('pendingApplications').textContent = 
-      applications.filter(app => app.status === 'In Review').length;
-    document.getElementById('interviewScheduled').textContent = 
-      applications.filter(app => app.status === 'Interview Scheduled').length;
-    document.getElementById('acceptedOffers').textContent = 
-      applications.filter(app => app.status === 'Accepted').length;
-  } catch (error) {
-    console.error('Error calculating statistics:', error);
-  }
+    try {
+        const response = await fetch(`${API_URL}/applications/user/${currentUser.user_id}`);
+        const applications = await response.json();
+        
+        if (document.getElementById('profileTotalApps')) {
+            document.getElementById('profileTotalApps').textContent = applications.length;
+        }
+        if (document.getElementById('profileInReview')) {
+            document.getElementById('profileInReview').textContent = applications.filter(a => a.status === 'In Review').length;
+        }
+        if (document.getElementById('profileInterviews')) {
+            document.getElementById('profileInterviews').textContent = applications.filter(a => a.status === 'Interview').length;
+        }
+        if (document.getElementById('profileOffers')) {
+            document.getElementById('profileOffers').textContent = applications.filter(a => a.status === 'Offer').length;
+        }
+    } catch (error) {
+        console.error('Error calculating statistics:', error);
+    }
 }
 
 async function loadStatistics() {
-  try {
-    const response = await fetch(`${API_URL}/applications/user/${currentUser.user_id}`);
-    const applications = await response.json();
-    
-    document.getElementById('statsTotal').textContent = applications.length;
-    
-    const thisMonth = new Date();
-    const thisMonthApps = applications.filter(app => {
-      const appDate = new Date(app.application_date);
-      return appDate.getMonth() === thisMonth.getMonth() && 
-             appDate.getFullYear() === thisMonth.getFullYear();
-    });
-    document.getElementById('statsThisMonth').textContent = thisMonthApps.length;
-    
-    const accepted = applications.filter(app => app.status === 'Accepted').length;
-    const successRate = applications.length > 0 ? ((accepted / applications.length) * 100).toFixed(1) : 0;
-    document.getElementById('statsSuccessRate').textContent = successRate + '%';
-    
-    document.getElementById('statsAvgTime').textContent = '5 days';
-    
-  } catch (error) {
-    console.error('Error loading statistics:', error);
-  }
+    try {
+        const response = await fetch(`${API_URL}/applications/user/${currentUser.user_id}`);
+        const applications = await response.json();
+        
+        const total = applications.length;
+        const thisMonth = applications.filter(app => {
+            const appDate = new Date(app.application_date);
+            const now = new Date();
+            return appDate.getMonth() === now.getMonth() && appDate.getFullYear() === now.getFullYear();
+        }).length;
+        
+        const successRate = total > 0 ? ((applications.filter(a => a.status === 'Offer').length / total) * 100).toFixed(0) : 0;
+        
+        if (document.getElementById('statTotalApps')) {
+            document.getElementById('statTotalApps').textContent = total;
+            document.getElementById('statThisMonth').textContent = thisMonth;
+            document.getElementById('statSuccessRate').textContent = `${successRate}%`;
+        }
+    } catch (error) {
+        console.error('Error loading statistics:', error);
+    }
 }
