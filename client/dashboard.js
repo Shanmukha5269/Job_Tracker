@@ -215,7 +215,7 @@ async function updateProfile(event) {
     }
     
     const data = {
-        fullname: document.getElementById('profileFullName').value,
+        full_name: document.getElementById('profileFullName').value,
         email: document.getElementById('profileEmail').value,
         phone: document.getElementById('profilePhone').value,
         location: document.getElementById('profileLocation').value,
